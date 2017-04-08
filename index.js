@@ -3,7 +3,7 @@
 *   node.js version of Haruna bot created in C#
 */
 
-//Get access to Discord.js libraries here
+//Get access to Discord.js library here
 const Discord = require('discord.js'); //load discord
 
 
@@ -30,6 +30,7 @@ var pouts = [
     './images/pouts/pout13.png'
 ];
 
+
 //store of smug paths
 var smugs = [
     './images/smugs/smug1.png', './images/smugs/smug2.png',
@@ -40,6 +41,7 @@ var smugs = [
     './images/smugs/smug11.png', './images/smugs/smug12.png',
     './images/smugs/smug13.png'
 ];
+
 
 //store of selfie paths
 var selfies = [
@@ -90,13 +92,23 @@ var selfies = [
     './images/selfies/selfie177.png'
 ];
 
+
 //store of idle texts 
 var idleTexts = [
-    'Yes, if you\'re fine with Haruna, I\'ll be your partner any time!',
-    'Yes, Haruna is daijoubou desu!',
-    'The admiral is very kind. Haruna appreciates your consideration.',
-    'Haruna, accepting orders to standby..',
-    'Daijoubou Desu!'
+    `Yes, if you\'re fine with Haruna, I'll be your partner any time!`,
+    `Yes, Haruna is daijoubou desu!`,
+    `The admiral is very kind. Haruna appreciates your consideration.`,
+    `Haruna, accepting orders to standby..`,
+    `Daijoubou Desu!`
+];
+
+
+//store of comfort texts
+var comfortTexts = [
+    `Sometimes, even your best.. isn't enough. You can't beat yourself up about it desu! <3`,
+    `You're best when you're smiling, desu <3`,
+    `You'll find its necessary to let things go, simply for the reason they're heavy, desu <3`,
+    `You always come to my resuce, now its time for me to come to yours <3`
 ];
 
 
@@ -105,7 +117,27 @@ var commands = {
     //help command
     'help': {
         'function': function(args, content, author, channel, guild) {
-            //TODO: things to make it cool
+            var pickDescription = 'picks an option from a list separated by "|"';
+            var message = '```\n';
+            message += '========= help commands =========\n'
+            + 'hello: '     + commands.hello.description + '\n'
+            + 'bye: '       + commands.bye.description + '\n'
+            + 'roll: '      + commands.roll.description + '\n'
+            + 'random: '    + commands.roll.description + '\n'
+            + 'coin: '      + commands.coin.description + '\n'
+            + 'help: '      + commands.help.description + '\n'
+            + 'pick: '      + pickDescription           + '\n'
+            + 'purge: '     + commands.purge.description + '\n'
+            + 'idle: '      + commands.idle.description + '\n'
+            + 'invite: '    + commands.invite.description + '\n'
+            + 'pout: '      + commands.pout.description + '\n'
+            + 'selfie: '    + commands.selfie.description + '\n'
+            + 'sleep: '     + commands.sleep.description + '\n'
+            + 'smug: '      + commands.smug.description + '\n'
+            + 'comfort: '   + commands.comfort.description + '\n'
+            + '=================================\n```';   
+
+            channel.sendMessage('My help commands can be seen here:' + message);
         },
         'description': 'sends this message'
     },
@@ -115,21 +147,91 @@ var commands = {
         'function': function(args, content, author, channel, guild) {
             var response = 'Hello ' + author.username + '!';
             
-            if(guild.owner.user.username === author.username)
+            if(guild.owner.user.username === author.username) {
                 response += ' <3';
+            }
 
             channel.sendMessage(response)
             .then(message => console.log(`Sent message: ${message.content}`))
             .catch(console.error);
         },
-        'description': 'does it work?'
+        'description': 'sends hello to user (includes a <3 for server owner)'
     },
 
+    //goodbye command
+    'bye': {
+        'function': function(args, content, author, channel, guild) {
+            var response = 'Goodbye ' + author.username + '!';
+
+            if(guild.owner.user.username === author.username) {
+                response += ' <3';
+            }
+
+            channel.sendMessage(response)
+            .then(message => console.log(`Sent message: ${message.content}`))
+            .catch(console.error);
+        },
+        'description': 'sends a goodbye to user (includes a <3 for server owner)'
+    },
+
+    //dice roll
+    'roll': {
+        'function': function(args, content, author, channel, guild) {
+            var roll = (Math.floor(Math.random() * 6)) + 1;
+            
+            channel.sendMessage(author + ` you rolled a ${roll} desu!`)
+            .then(message => console.log(`Sent message: ${message.cleanContent}`))
+            .catch(console.error);
+        },
+        'description': 'rolls a 6 sided dice'
+    },
+
+    //random number
+    'random': {
+        'function': function(args, content, author, channel, guild) {
+            var random = 4;
+
+            channel.sendMessage(author + ` your random number is ${random} desu!`)
+            .then(message => console.log(`Sent message: ${message.cleanConent}`))
+            .catch(console.error);
+        },
+        'description': 'generates a random number between 1 and 10'
+    },
+
+    //flip coin
+    'coin': {
+        'function': function(args, content, author, channel, guild) {
+            var random = Math.random();
+            var response = (random === 0) ? 'heads' : 'tails';
+            
+            channel.sendMessage(author + ` I choose ${response} desu!`)
+            .then(message => console.log(`Sent message: ${message.cleanContent}`))
+            .catch(console.error);
+        },
+        'description': 'flips a coin, returns heads or tails'
+    },
+
+    //purge command - deletes 100 messages
+    'purge': {
+        'function': function(args, content, author, channel, guild) {
+           channel.bulkDelete(100)
+           .then(message => {
+               log(`INFO`, `Success desu! Deleted 100 messages from ${channel.name} <3`);
+           })
+           .catch(reason => {
+                channel.sendMessage('Something went wrong. Oops desu!');
+               log('ERROR', `Something went wrong purging messages: ${reason} desu :c`);
+           });
+        },
+        'description': 'purges messages'
+    },
+
+    //smug anime girl command
     'smug': {
         'function': function(args, content, author, channel, guild) {
-            var pos = Math.floor(Math.random() * smugs.length); //TODO: change smugs.size -> length??
+            var pos = Math.floor(Math.random() * smugs.length);
 
-            var fileLocation = smugs[pos]; //TODO: figure out how to reference item in javascript array
+            var fileLocation = smugs[pos];
             channel.sendMessage('', {
                  file: fileLocation
              })
@@ -139,6 +241,7 @@ var commands = {
         'description': 'sends a smug'
     },
 
+    //pouting anime girl command :T
     'pout': {
         'function': function(args, content, author, channel, guild) {
             var pos = Math.floor(Math.random() * pouts.length);
@@ -152,6 +255,7 @@ var commands = {
         'description': 'sends a pout'
     },
 
+    //Haruna selfie command
     'selfie': {
         'function': function(args, content, author, channel, guild) {
             var pos = Math.floor(Math.random() * selfies.length);
@@ -165,15 +269,58 @@ var commands = {
         'description': 'sends a haruna selfie'
     },
 
+    //Idling text (from Kancolle) command
+    'idle': {
+        'function': function(args, content, author, channel, guild) {
+            var pos = Math.floor(Math.random() * idleTexts.length);
+
+            var output = idleTexts[pos]
+            channel.sendMessage(`${output}`)
+            .then(message => console.log(`Sent message: ${message.content}`))
+            .catch(console.error);
+        },
+        'description': 'sends an idling message'
+    },
+
+    //Sends bot to sleep after sending a message
     'sleep': {
         'function': function(args, content, author, channel, guild) {
-            channel.sendMessage('Goodnight ' + guild.owner.username + ' <3')
+            channel.sendMessage('Goodnight ' + guild.owner.user.username + ' <3')
             .then(message => console.log(`Sent message: ${message.content}`))
             .catch(console.error);
 
             haruna_js.destroy();
         },
         'description': 'makes bot go offline'
+    },
+
+    //generate invite command
+    'invite': {
+        'function': function(args, content, author, channel, guild) {
+            //generate invite link from perms
+            var generateInvite = haruna_js.generateInvite(2146958463)
+            .then(link => {
+                channel.sendMessage(`You can invite me from ${link}`);
+            })
+            .catch(reason => {
+                channel.sendMessage('Something went wrong. Oops desu! :c');
+                console.log(`Error generating invite ${reason}`);
+            });
+        },
+        'description': 'sends an invite link'
+    },
+
+    //comfort command
+    'comfort': {
+        'function': function(args, content, author, channel, guild) {
+            var pos = Math.floor(Math.random() * comfortTexts.length);
+
+            var output = comfortTexts[pos];
+            channel.sendMessage(`${output}`)
+            .then(message => console.log(`Sent message: ${message.content}`))
+            .catch(console.error);
+        },
+        'description': 'sends a comforting message'
     }
 };
 
@@ -192,8 +339,80 @@ haruna_js.on('message', function(message) {
     var channel = message.channel;
     var guild = message.guild; //if channel is private, this will be null
 
-    //possible character setup
-    if(content.indexOf(']') === 0) { //check to see if message is a command
+    //**Intercept message content first to see if it matches any .content commands**
+    
+    //replies to \<3 with <3
+    if(content.includes('\<3') && author === guild.owner.user) {
+        if(channel.type === 'text') { //check if channel is in guild, get guild if private message
+                log('CMD', '[' + guild.name + '' + '] ' 
+                    + '[' + author.username + '#' + author.discriminator + '] ' + message.cleanContent);
+            } else { //this accounts for private messages
+                  log('CMD', '[' + author.username + '#' + author.discriminator + ']: ' + message.cleanContent); //don't include guild as it is null 
+            }
+        channel.sendMessage('\<3');
+    }
+
+    //ayy -> lmao desu
+    if(content.includes(' ayy') || content === 'ayy') {
+        if(channel.type === 'text') { //check if channel is in guild, get guild if private message
+                log('CMD', '[' + guild.name + '' + '] ' 
+                    + '[' + author.username + '#' + author.discriminator + '] ' + message.cleanContent);
+            } else { //this accounts for private messages
+                  log('CMD', '[' + author.username + '#' + author.discriminator + ']: ' + message.cleanContent); //don't include guild as it is null 
+            }
+        channel.sendMessage('lmao desu!')
+        .then(message => console.log(`Sent message: ${message.content}`))
+        .catch(console.error);
+    }
+
+    //merk fair desu
+    if(content.includes('fair') && author.username.includes('merk')) {
+        if(channel.type === 'text') {
+            log(`CMD`, `[${guild.name}] [${author.username}#${author.discriminator}]: ${message.cleanContent}`);
+        } else {
+            log(`CMD`, `[${author.username}#${author.discriminator}]: ${message.cleanContent}`); //no guild inclusion, it is null
+        }
+        channel.sendMessage('fair desu')
+        .then(message => console.log(`Sent message: ${message.content}`))
+        .catch(console.error);
+    }
+
+    //pick an option from the list, separated by a '|'
+    if(content.toLowerCase.includes('-pick') && !author.bot) {
+        if(!content.includes('|')) {
+            channel.sendMessage("that is not the correct format for the command, desu!");
+        } else {
+            if(channel.type === 'text') {
+                log(`CMD`, `[${guild.name}] [${author.username}#${author.discriminator}]: ${message.cleanContent}`);
+            } else {
+                log(`CMD`, `[${author.username}#${author.discriminator}]: ${message.cleanContent}`); //no guild inclusion, it is null
+            }
+
+            var rawText = message.cleanContent;
+            rawText = rawText.slice(5); //remove command from text
+            
+            var options = rawText.split('|'); //split around |
+            var random = Math.floor(Math.random() * options.length); //pick random option
+
+            for(var i = 0; i < options.length; i++) {
+                if(options[i].indexOf(' ') === 0) {
+                    options[i] = options[i].substring(1); //remove leading space
+                }
+                if(options[i].lastIndexOf(' ') === options[i].length - 1) {
+                    options[i] = options[i].substring(0, options[i].length - 1); //remove trailing space
+                }
+            }
+            var optionToSend = options[random];
+
+            channel.sendMessage(author + ` I choose ${optionToSend} desu!`)
+            .then(message => console.log(`Sent message: ${message.cleanContent}`))
+            .catch(console.error);
+        }
+    }
+
+    //**Set up other command stuff **
+    //command character setup
+    if(content.indexOf('-') === 0) { //check to see if message is a command
         var args = content.slice(1).split(' ');
         var command = args.shift().toLowerCase();
        
@@ -205,24 +424,23 @@ haruna_js.on('message', function(message) {
             } else { //this accounts for private messages
                   log('CMD', '[' + author.username + '#' + author.discriminator + ']: ' + message.cleanContent); //don't include guild as it is null 
             }
-
             commands[command].function(args, content, author, channel, guild); //pass all relevant info - reduce code repetition
         }
     }
 });
 
+
 //server join
 haruna_js.on('guildCreate', function(guild) {
-    //TODO: update status message with correct number of guilds
-    guild.size++;
+    log('INFO', 'Haruna has joined ' + guild.name + '! Now standing by in ' + haruna_js.guilds.size + ' guilds! <3');
 });
+
 
 //server leave
 haruna_js.on('guildDelete', function(guild) {
-     //TODO: update status message with correct number of guilds
-     guild.size--;
+     log('INFO', 'Haruna has left ' + guild.name + '! Now standing by in ' + haruna_js.guilds.size + ' guilds! <3');
 });
 
 
-//replace with token
+//load token from auth.json
 haruna_js.login(require('./auth.json').token);
