@@ -2,7 +2,7 @@
  * Created by Jorta on 20/06/2017.
  */
 
-let _haruna = require('./haruna.js'); //for access to image stores TODO: find a better way?? || this may be the best way..
+let _haruna = require('./index.js'); //for access to image stores TODO: find a better way?? || this may be the best way..
 let _content, _channel, _author, _guild, _guildOwner, _command, _args;
 
 
@@ -101,10 +101,16 @@ let _commando = {
         'description': 'flips a coin, returns heads or tails'
     },
 
-    //purge command - deletes 100 messages
+    //purge command - deletes 100 messages //TODO: look into how to delete things again
     'purge': {
         'function': function () {
-            let response = _bulkDeleteFromChannel(_channel);
+            let response = '';
+            if(_channel.type === 'text') {
+                response = _bulkDeleteFromChannel(_channel);
+            } else {
+                response = 'This command can only be used in text channel desu!';
+            }
+
             return response;
         },
         'description': 'purges 100 messages from the channel the command was used in'
@@ -154,7 +160,7 @@ let _commando = {
                 _haruna.shutdownGracefully(_channel);
             }
             else {
-                response = 'Sorry desu; you don\'t have permission to do that! \<3'
+                response = 'Sorry desu, you don\'t have permission to do that! \<3'
             }
             return response;
         },
@@ -182,23 +188,41 @@ let _commando = {
     //pick command
     'pick': {
         'function': function () {
-            let response = '';
+            let response = _author;
             if (_isNotPickCommandFormat(_content)) {
-                response = 'That is not the correct format desu!';
+                response = ' That is not the correct format desu!';
                 return response;
             } else {
                 let options = _parseOptions(_content);
                 let optionToSend = _randomElementFromArray(options);
-                response += `I choose ${optionToSend} desu!`;
+                response += ` I choose ${optionToSend} desu!`;
                 return response;
             }
         },
         'description': 'picks random option from list given as -pick option_1 | option_2 | option_3'
+    },
+
+    //set game command (bot owner)
+    'set_game': {
+        'function': function() {
+            let response = '';
+            if(_isAdmiral()) {
+                let game = '';
+                for(let i = 0; i < _args.length; i++) {
+                    game += _args[i] + " ";
+                }
+                response = _haruna.setGameWithResponse(game);
+            } else {
+                response = _author + ' sorry desu, you lack the permissions to do that! <3';
+            }
+            return response;
+        },
+       'description': `sets the bot's current activity (bot owner only)`
     }
 };
 
 let _commandExists = function(command) {
-    return _commando[command] !== null;
+    return _commando[command] !== undefined;
 };
 
 let _generateHelpMessage = function() {
@@ -234,6 +258,8 @@ let _generateHelpMessage = function() {
         + 'smug: ' + _commando.smug.description + '\n'
         + '----------------------------------------------------'
         + 'comfort: ' + _commando.comfort.description + '\n'
+        + '----------------------------------------------------'
+        + 'set_game: ' + _commando.set_game.description + '\n'
         + '=================================\n```'
 
     return response;
@@ -261,7 +287,7 @@ let _randomElementFromArray = function(array) {
 };
 
 let _bulkDeleteFromChannel = function() {
-    return _haruna.deleteMessagesFromChannel(100, _channel);
+    return _haruna.deleteMessagesFromChannel(50, _channel);
 };
 
 let _isAdmiral = function() {
@@ -274,7 +300,7 @@ let _isNotPickCommandFormat = function() {
 
 let _parseOptions = function(message) {
     let options = message.slice(5).split('|');
-    for(var i = 0; i < options.length; i++) {
+    for(let i = 0; i < options.length; i++) {
         options[i] = options[i].trim();
     }
     return options;

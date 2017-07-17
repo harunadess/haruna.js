@@ -14,7 +14,7 @@ module.exports.Logger = {
 };
 
 let _assembleLogMessage = function (level, message) {
-    return '[' + level + ']' + message;
+    return '[' + level + ']' + " " + message;
 };
 
 let _generateCommandLogMessage = function(message) { //TODO: fix method

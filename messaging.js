@@ -6,7 +6,7 @@ const Logger = require('./logger').Logger;
 module.exports.Messaging = {
     sendTextMessageToChannel(messageContent, channel) {
         channel.sendMessage(messageContent)
-        .then(message => Logger.log('CMD', `Sent message: ${message.content}`))
+        .then(message => Logger.log('CMD', `Sent message: ${message.cleanContent}`))
         .catch(console.error);
     },
 
