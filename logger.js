@@ -3,12 +3,12 @@
  */
 
 module.exports.Logger = {
-    log(level, message) {
+    log: function(level, message) {
         _log(level, message);
     },
 
-    logUserMessage(message) {
-        let logMessage = _generateCommandLogMessage(message); //TODO: somehow returns user message in level
+    logUserMessage: function(message) {
+        let logMessage = _generateCommandLogMessage(message);
         _log('CMD', logMessage);
     }
 };
@@ -17,7 +17,7 @@ let _assembleLogMessage = function (level, message) {
     return '[' + level + ']' + " " + message;
 };
 
-let _generateCommandLogMessage = function(message) { //TODO: fix method
+let _generateCommandLogMessage = function(message) {
     let channel = message.channel;
     let user = message.author;
     let logMessage = '';

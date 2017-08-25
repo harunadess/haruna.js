@@ -1,33 +1,34 @@
 /**
  * Created by Jorta on 25/06/2017.
  */
-/*
- *   Haruna bot created by Jordan
- *   node.js version of Haruna bot created in C#
- */
-
 const SubStringCommands = require('./subStringCommands').SubStringCommands;
 const Messaging = require('./messaging').Messaging;
 const Logger = require('./logger').Logger;
 const Commands = require('./commands').Commands;
+const MusicCommands = require('./musicCommands').MusicCommands;
 const Discord = require('discord.js');
 
-let _haruna = new Discord.Client({ 'autoReconnect': true });
+let _haruna = new Discord.Client({'autoReconnect': true});
+
+//intervals
+let _hourlyInterval = null;
 
 //string arrays of files
-module.exports.pouts = require('./images/paths/pouts.json').paths;
-module.exports.smugs = require('./images/paths/smugs.json').paths;
-module.exports.selfies = require('./images/paths/selfies.json').paths;
-module.exports.idleTexts = require('./images/paths/idles.json').paths;
-module.exports.comfortTexts = require('./images/paths/comforts.json').paths;
+module.exports.pouts = require('./paths/pouts.json').paths;
+module.exports.smugs = require('./paths/smugs.json').paths;
+module.exports.selfies = require('./paths/selfies.json').paths;
+module.exports.idleTexts = require('./paths/idles.json').paths;
+module.exports.comfortTexts = require('./paths/comforts.json').paths;
+
+let _hourlyTexts = require('./texts/hourly.json').texts;
+
 
 module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
     let response = '';
     channel.bulkDelete(numberOfMessages)
         .then(message => {
             Logger.log('SUCCESS', 'deleted 100 messages from ' + channel);
-        })
-        .catch(reason => {
+        }).catch(reason => {
             response = 'Something went wrong on my end. Oops desu!';
             Logger.log('ERROR', `Something went wrong purging messages: ${reason} desu :c`);
         });
@@ -54,8 +55,7 @@ module.exports.generateSelfInvite = function(channel) {
         .then(link => {
             Logger.log('INFO', 'Invite link sent to ' + channel + '<3');
             Messaging.sendTextMessageToChannel(`You can invite me from ${link} desu! <3`, channel);
-        })
-        .catch(reason => {
+        }).catch(reason => {
             Logger.log('ERROR', `Error generating invite ${reason}`);
             Messaging.sendTextMessageToChannel('Oops, something went wrong desu! :c', channel);
         });
@@ -65,6 +65,19 @@ module.exports.setGameWithResponse = function(game) {
     let response = '';
     response = _setGameWithResponse(game);
     return response;
+};
+
+module.exports.setInterval = function(type, channelToMessage) {
+   let interval = 60000; //60000 = one minute
+    if(type === 'hourly') {
+        _hourlyInterval = _haruna.setInterval(_hourlyNotifications, interval, channelToMessage);
+    }
+};
+
+module.exports.clearInterval = function(type) {
+    if(type === 'hourly') {
+        _haruna.clearInterval(_hourlyInterval);
+    }
 };
 
 //***********************
@@ -82,16 +95,47 @@ let _setGameWithResponse = function(game) {
     } else {
         playing = `Jortathlon's Secretary Ship`;
     }
-    _haruna.user.setGame(playing)
-        .then(message => {
-            Logger.log('INFO', `Success setting game! <3`);
-            response = 'Game set! <3';
-        })
-        .catch(error => {
-            Logger.log('ERROR', 'Something went wrong setting the game: ' + error + ' :c');
-            response =  `Game not set, check the captain's log <3`;
-        });
+
+    let status = {
+        status: 'online',
+        afk: false,
+        game: {
+            name: playing,
+            url: ''
+        }
+    };
+
+    _haruna.user.setPresence(status).then(user => {
+        Logger.log('INFO', `Set game to ${user.presence.game.name}`);
+        response = 'Game set! <3';
+    }).catch(error => {
+        Logger.log('ERROR', 'Something went wrong setting the game: ' + error + ' :c');
+        response =  `Game not set, check the captain's log <3`;
+    });
+
     return response;
+};
+
+let _hourlyNotifications = function(channelToMessage) {
+    let now = new Date();
+    let currentTime = _formatTime(now.getUTCMinutes(), now.getUTCHours());
+    console.log(currentHour + ':' + currentMinute.toFixed(2) + ': called #_hourlyNotifications');
+
+    if(currentTime.minute === 0) {
+        let response = _hourlyTexts[parseInt(currentTime.hour)];
+        Messaging.sendTextMessageToChannel(response, channelToMessage);
+    }
+};
+
+let _formatTime = function(currentMinute, currentHour) {
+    if(currentMinute < 10) {
+        currentMinute = '0' + currentMinute;
+    }
+    if(currentHour < 10) {
+        currentHour = '0' + currentHour;
+    }
+
+    return {hour: currentHour, minute: currentMinute};
 };
 
 //***********************
@@ -102,6 +146,8 @@ _haruna.on('message', function(message) {
 
     if(_isGenericCommand(message.content)) {
         response = Commands.processMessageIfCommandExists(message);
+    } else if(_isMusicCommand(message.content)) {
+        response = MusicCommands.processMessageIfCommandExists(message);
     } else {
         response = SubStringCommands.processMessageIfCommandExists(message);
     }
@@ -109,14 +155,46 @@ _haruna.on('message', function(message) {
     if(_hasResponseToGive(response)) {
         _respondViaChannel(response, message.channel);
     }
+
+    // if(message.content.includes('+play')) {
+    //     let song = message.content.slice(6);
+    //     Logger.log('MUSIC', 'got a request');
+    //     const voiceChannel = message.member.voiceChannel;
+    //     if(!voiceChannel) {
+    //         _respondViaChannel('Please be in a voice channel first desu! <3', message.channel);
+    //     } else {
+    //         voiceChannel.join()
+    //             .then(connection => {
+    //                 Logger.log('MUSIC', 'connected to ' + voiceChannel.name);
+    //                 const stream = yt(song, {audioonly: true});
+    //                 const dispatcher = connection.playStream(stream);
+    //                 dispatcher.on('end', () => {
+    //                     Logger.log('MUSIC', 'left ' + message.channel);
+    //                     voiceChannel.leave();
+    //                 });
+    //             })
+    //             .catch(error => {
+    //                 Logger.log('ERR', error);
+    //                 _respondViaChannel('there was an error desu! ;c' ,message.channel);
+    //             });
+    //     }
+    // }
 });
 
 let _isGenericCommand = function(content) {
     return content.indexOf('-') === 0; //The '-' character is the command character e.g. '-hello'
 };
 
+let _isMusicCommand = function(content) {
+    return content.indexOf('+') === 0; //Different command for music
+};
+
 let _hasResponseToGive = function(response) {
-    return response !== '';
+    return (response !== '') && _thereWasNoFuckUp(response);
+};
+
+let _thereWasNoFuckUp = function(hopefullyThisIsAString) {
+    return hopefullyThisIsAString !== undefined;
 };
 
 let _respondViaChannel = function(response, channel) {
@@ -128,7 +206,8 @@ let _respondViaChannel = function(response, channel) {
 };
 
 let _isImage = function(response) {
-    return response.includes(".png") || response.includes(".jpg") || response.includes(".gif");
+    return response.endsWith(".png") || response.endsWith(".jpg") || response.endsWith(".gif")
+        || response.endsWith(".jpeg");
 };
 
 

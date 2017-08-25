@@ -12,7 +12,7 @@ let _content;
 let _author;
 
 module.exports.SubStringCommands = {
-    processMessageIfCommandExists(message) {
+    processMessageIfCommandExists: function(message) {
         _initialiseVariables(message);
         let response = '';
         if(_notFromBot()) {
