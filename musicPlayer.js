@@ -5,20 +5,24 @@ module.exports.MusicPlayer = (function() {
     function MusicPlayer() {
         this._queue = [];
         this._pointer = -1;
-        this._voiceChannel = undefined;
-        this._dispatcher = undefined;
-        this._stream = undefined;
-        this._connection = undefined;
-        this._volume = 1;
+        this._voiceChannel = null;
+        this._dispatcher = null;
+        this._stream = null;
+        this._connection = null;
+        this._volume = 0.2;
         this._isPlaying = false; //todo: potentially implement checks on pause/resume and such
         this._isStopped = false; //todo: this may be overkill, and is already more or less implemented
     }
 
     MusicPlayer.prototype.addToEnd = function(songToAdd, author) {
         if(this._isValidURL(songToAdd)) {
-            this._addToQueue(songToAdd, this._queue, author);
-            Logger.log('MUSIC', `Added ${songToAdd} to the queue.`);
-            return `Added \`\`${songToAdd}\`\` to the queue!`;
+            return new Promise((resolve, reject) => {
+                this._addToQueue(songToAdd, author).then(title => {
+                    return resolve(title);
+                }).catch(error => {
+                    return reject(error);
+                });
+            });
         } else {
             Logger.log('MUSIC', `Rejection of link: ${songToAdd}`);
             return `Please only use valid youtube links desu! <3`
@@ -29,15 +33,20 @@ module.exports.MusicPlayer = (function() {
         return ((url.includes('youtu.be/')) || (url.includes('youtube.com/watch?v=')));
     };
 
-    MusicPlayer.prototype._addToQueue = function(songToAdd, queue, requester) {
-        return YT.getInfo(songToAdd).then(info => {
-            queue.push({
-                title: info.title,
-                url: info.video_url,
-                requester: (requester.username + '#' + requester.discriminator)
+    MusicPlayer.prototype._addToQueue = function(songToAdd, requester) {
+        return new Promise((resolve, reject) => {
+            YT.getInfo(songToAdd).then(info => {
+                this._queue.push({
+                    title: info.title,
+                    url: info.video_url,
+                    requester: (requester.username + '#' + requester.discriminator)
+                });
+                Logger.log('MUSIC', 'Added song to queue');
+                resolve(`Haruna has added \`\`${this.getLastAdded().title}\`\` to the queue!`);
+            }).catch(error => {
+                Logger.log('ERR', 'Error getting song info: ' + error);
+                reject('Error adding song to queue');
             });
-        }).catch(error => {
-            Logger.log('ERR', 'Error getting song info: ' + error);
         });
     };
 
@@ -53,11 +62,11 @@ module.exports.MusicPlayer = (function() {
 
     MusicPlayer.prototype.songsInQueueText = function() {
         console.log('queue length: ' + this._queue.length);
-       if(this._queue.length > 1) {
-           return `There are ${this._queue.length} songs in the queue! <3`;
-       } else {
-           return `There is 1 song in the queue! <3`;
-       }
+        if(this._queue.length > 1) {
+            return `There are ${this._queue.length} songs in the queue! <3`;
+        } else {
+            return `There is 1 song in the queue! <3`;
+        }
     };
 
     MusicPlayer.prototype.hasItemsInQueue = function() {
@@ -66,17 +75,26 @@ module.exports.MusicPlayer = (function() {
 
     MusicPlayer.prototype.play = function() {
         if(!this._isPrepared()) {
+            Logger.log('DEBUG', '_notPrepared');
             if(this.hasItemsInQueue()) {
+                Logger.log('DEBUG', 'hasItemsInQueue');
                 this._prepareForPlay();
+                Logger.log('DEBUG', 'prepared');
                 this._play();
+                Logger.log('DEBUG', 'has played');
             } else {
                 return `There are no songs in the queue desu!`;
             }
         } else {
+            Logger.log('DEBUG', 'already prepared');
             if(this.hasItemsInQueue()) {
-                this.playNext();
+                Logger.log('DEBUG', 'items are in queue: pt2');
+                this._play();
+                Logger.log('DEBUG', 'has played: pt2');
             } else {
-                return `There are no items in the queue desu! <3`;
+                Logger.log('DEBUG', 'no items in queue');
+                this.stop();
+                // return `There are no items in the queue desu! <3`;
             }
         }
     };
@@ -94,19 +112,22 @@ module.exports.MusicPlayer = (function() {
         this._stream = YT(nextSong, {
             audioonly: true
         });
+        Logger.log('DEBUG', '_createStream');
     };
 
     MusicPlayer.prototype._play = function() {
         this._dispatcher = this._connection.playStream(this._stream, {
             volume: this._volume
         });
+        Logger.log('DEBUG', '_play => playStream');
         this._dispatcher.on('end', () => {
+            Logger.log('DEBUG', '_play => onEnd');
             return this._streamEnd();
         });
         this._dispatcher.on('error', () => {
+            Logger.log('DEBUG', '_play => onError');
             return this._streamError();
         });
-        return `Now playing: \`\`${this.getCurrent().title}\`\`! (position ${(this._pointer + 1)}/${this._queue.length})`;
     };
 
     MusicPlayer.prototype._nextInQueue = function() {
@@ -116,36 +137,56 @@ module.exports.MusicPlayer = (function() {
 
     MusicPlayer.prototype._streamEnd = function() {
         if(this._hasNext()) {
+            Logger.log('DEBUG', '_streamEnd & hasNext');
             this.playNext();
         } else {
-            this.stop();
-            this._voiceChannel.leave();
-            this._voiceChannel = null;
-            return `Queue is empty desu! Haruna is disconnecting from voice chat`;
+            return this.stop();
         }
     };
 
     MusicPlayer.prototype._hasNext = function() {
-        return this._queue[this._pointer + 1];
+        Logger.log('DEBUG', '_hasNext');
+        return this._queue[this._pointer + 1] !== undefined;
     };
 
     MusicPlayer.prototype.playNext = function() {
+        Logger.log('DEBUG', 'playNext');
         this._createStream();
-        this._play();
+        Logger.log('DEBUG', 'playNext: createStream');
+        this.play();
+        Logger.log('DEBUG', 'playNext: play');
     };
 
     MusicPlayer.prototype.stop = function() {
-        this._dispatcher.end();
+        Logger.log('DEBUG', 'stop');
+        this._dispatcher.pause();
         this._stream = null;
         this._connection = null;
-        this.clearQueue();
-        return `Haruna has stopped playback and cleared the queue <3`;
+        this._dispatcher = null;
+        this._pointer = -1;
+        return `Haruna has stopped playback and ${this.clearQueue()}`;
+    };
+
+    MusicPlayer.prototype.pause = function() {
+        this._dispatcher.pause();
+        return `Haurna has paused the current song desu! <3`;
+    };
+
+    MusicPlayer.prototype.resume = function() {
+        this._dispatcher.resume();
+        return `Haruna is resuming play desu! <3`;
+    };
+
+    MusicPlayer.prototype.skip = function() {
+        this.playNext();
+        return `Haruna is skipping this song desu! <3`;
     };
 
     MusicPlayer.prototype._streamError = function() {
         try {
             this.stop();
             this._voiceChannel.leave();
+            this._voiceChannel = null;
         } catch(err) {
             Logger.log('MUSIC', 'dispatcher error: ' + err);
             return `Something went wrong desu, leaving voice channel`;
@@ -157,8 +198,8 @@ module.exports.MusicPlayer = (function() {
         let printedQueue = 'There are ' + this._queue.length + ' songs in the queue!\n```==Play Queue==\n';
         if(this.hasItemsInQueue()) {
             for(let i = 0; i < this._queue.length; i++) {
-                printedQueue += (i+1) + '. ' + this._queue[i].title
-                    + '\n\t-Requested by ' + this._queue[i].requester
+                printedQueue += (i + 1) + '. ' + this._queue[i].title
+                    + '\n\t#Requested by ' + this._queue[i].requester
                     + '\n';
             }
         } else {
@@ -170,15 +211,15 @@ module.exports.MusicPlayer = (function() {
 
     MusicPlayer.prototype.clearQueue = function() {
         this._queue = [];
-        this._pointer = 0;
+        this._pointer = -1;
         return 'Haruna has cleared the queue! <3';
     };
 
-    MusicPlayer.prototype.setVoiceChannel = function(voiceChannel) {
+    MusicPlayer.prototype.setVoiceBroadcastChannel = function(voiceChannel) {
         this._voiceChannel = voiceChannel;
     };
 
-    MusicPlayer.prototype.getVoiceChannel = function() {
+    MusicPlayer.prototype.getVoiceBroadcastChannel = function() {
         return this._voiceChannel;
     };
 
@@ -201,6 +242,8 @@ module.exports.MusicPlayer = (function() {
             }
             this._dispatcher.setVolume(this._volume);
         }
+
+        return `Set volume to ${this._volume*100}% desu! <3`;
     };
 
     MusicPlayer.prototype.getCurrent = function() {

@@ -2,9 +2,8 @@
  * Created by Jorta on 20/06/2017.
  */
 
-let _haruna = require('./index.js'); //for access to image stores and client methods TODO: find a better way?? || this may be the best way..
+let _haruna = require('./index.js'); //for access to image stores and client methods
 let _content, _channel, _author, _guild, _command, _args;
-let _hourlyNotifications = false;
 
 
 module.exports.Commands = {
@@ -34,7 +33,7 @@ let _commandExists = function(command) {
 let _commando = {
     //help command
     'help': {
-        'function': function () {
+        'function': function() {
             return _generateHelpMessage();
         },
         'description': 'sends this message'
@@ -42,10 +41,10 @@ let _commando = {
 
     //hello command
     'hello': {
-        'function': function () {
+        'function': function() {
             let response = _generateGreetingMessage('Hello');
 
-            if (_isAdmiral()) {
+            if(_isAdmiral()) {
                 response += ' \<3';
             }
             return response;
@@ -55,9 +54,9 @@ let _commando = {
 
     //goodbye command
     'bye': {
-        'function': function () {
+        'function': function() {
             let response = _generateGreetingMessage('Goodbye');
-            if (_isAdmiral()) {
+            if(_isAdmiral()) {
                 response += ' \<3';
             }
             return response;
@@ -67,7 +66,7 @@ let _commando = {
 
     //dice roll
     'roll': {
-        'function': function () {
+        'function': function() {
             let roll, response;
             if(_isNumber(parseInt(_args[0]))) {
                 roll = _randomWholeNumber(parseInt(_args[0]));
@@ -85,7 +84,7 @@ let _commando = {
 
     //random number
     'random': {
-        'function': function () {
+        'function': function() {
             let random = 4;
             return _author + ` your random number is ${random} desu!`;
         },
@@ -94,7 +93,7 @@ let _commando = {
 
     //flip coin
     'coin': {
-        'function': function () {
+        'function': function() {
             let random = Math.random();
             let coinSide = _headsOrTailsFromRandomNumber(random);
             return _author + ` I choose ${coinSide} desu!`;
@@ -104,7 +103,7 @@ let _commando = {
 
     //purge command - deletes 100 messages //TODO: look into how to delete things again
     'purge': {
-        'function': function () {
+        'function': function() {
             let response = '';
             if(_channel.type === 'text') {
                 response = _bulkDeleteFromChannel(_channel);
@@ -119,7 +118,7 @@ let _commando = {
 
     //smug anime girl command
     'smug': {
-        'function': function () {
+        'function': function() {
             let pos = _randomPositionInArray(_haruna.smugs.length);
             return _haruna.smugs[pos];
         },
@@ -128,7 +127,7 @@ let _commando = {
 
     //pouting anime girl command :T
     'pout': {
-        'function': function () {
+        'function': function() {
             let pos = _randomPositionInArray(_haruna.pouts.length);
             return _haruna.pouts[pos];
         },
@@ -137,16 +136,16 @@ let _commando = {
 
     //Haruna selfie command
     'selfie': {
-        'function': function () {
+        'function': function() {
             let pos = _randomPositionInArray(_haruna.selfies.length);
-           return _haruna.selfies[pos];
+            return _haruna.selfies[pos];
         },
         'description': 'sends a haruna selfie'
     },
 
     //Idling text (from Kancolle) command
     'idle': {
-        'function': function () {
+        'function': function() {
             let pos = _randomPositionInArray(_haruna.idleTexts.length);
             return _haruna.idleTexts[pos];
         },
@@ -155,7 +154,7 @@ let _commando = {
 
     //Sends bot to sleep after sending a message
     'sleep': {
-        'function': function () {
+        'function': function() {
             let response = '';
             if(_isAdmiral()) {
                 _haruna.shutdownGracefully(_channel);
@@ -170,7 +169,7 @@ let _commando = {
 
     //generate invite command
     'invite': {
-        'function': function () {
+        'function': function() {
             _haruna.generateSelfInvite(_channel);
             return '';
         },
@@ -179,7 +178,7 @@ let _commando = {
 
     //comfort command
     'comfort': {
-        'function': function () {
+        'function': function() {
             let pos = _randomPositionInArray(_haruna.comfortTexts.length);
             return _haruna.comfortTexts[pos];
         },
@@ -188,9 +187,9 @@ let _commando = {
 
     //pick command
     'pick': {
-        'function': function () {
+        'function': function() {
             let response = _author;
-            if (_isNotPickCommandFormat(_content)) {
+            if(_isNotPickCommandFormat(_content)) {
                 response = ' That is not the correct format desu!';
                 return response;
             } else {
@@ -219,22 +218,34 @@ let _commando = {
             }
             return response;
         },
-       'description': `sets the bot's current activity (bot owner only)`
+        'description': `sets the bot's current activity (bot owner only)`
     },
 
     //replies with user's avatar
     'avatar': {
         'function': function() {
-            return _author + ', ' + _author.avatarURL;
+            let targetUser = _args[0];
+            if(targetUser === '' || !targetUser) {
+                return _author + ', ' + _author.avatarURL;
+            } else {
+                return _author + ', ' + targetUser.avatarURL;
+            }
         },
         'description': `replies with author's avatar`
     },
 
     'hourly': {
         'function': function() {
-            return _hourlyNotificationToggle();
+            return _haruna.toggleIntervals('hourly', _author);
         },
         'description': 'sets/unsets hourly notifications'
+    },
+
+    'chat': {
+        'function': function() {
+            return _haruna.setConversationEngineActive();
+        },
+        'description': 'sets/unsets chatting'
     }
 };
 
@@ -287,7 +298,7 @@ let _generateGreetingMessage = function(messageType) {
 };
 
 let _isNumber = function(value) {
-  return !isNaN(value);
+    return !isNaN(value);
 };
 
 let _randomWholeNumber = function(num) {
@@ -298,11 +309,7 @@ let _headsOrTailsFromRandomNumber = function(random) {
     return (random === 0 ? 'heads' : 'tails');
 };
 
-let _randomPositionInArray = function(arrayLength) {
-    return _randomNumberBetweenZeroAndUpperBound(arrayLength -1);
-};
-
-let _randomNumberBetweenZeroAndUpperBound = function(upperBound) {
+let _randomPositionInArray = function(upperBound) {
     let pos = Math.floor(Math.random()*upperBound);
     return pos;
 };
@@ -312,7 +319,7 @@ let _bulkDeleteFromChannel = function() {
 };
 
 let _isAdmiral = function() {
-    return _author.id === require('./auth.json').admiralID;
+    return _author.id === require('./json/auth.json').admiralID;
 };
 
 let _isNotPickCommandFormat = function() {
@@ -325,16 +332,4 @@ let _parseOptions = function(message) {
         options[i] = options[i].trim();
     }
     return options;
-};
-
-let _hourlyNotificationToggle = function() {
-    if(!_hourlyNotifications) {
-        _haruna.setInterval('hourly', _author);
-        _hourlyNotifications = true;
-        return `Set hourly messages! Use \`\`-hourly\`\` again to disable! <3`;
-    } else {
-        _haruna.clearInterval('hourly');
-        _hourlyNotifications = false;
-        return `Cleared hourly messages! Use \`\`-hourly\`\` again to enable! <3`;
-    }
 };

@@ -1,18 +1,17 @@
 {
-  "name": "discordbot",
+  "name": "haruna.js",
   "version": "1.0.0",
-  "description": "",
-  "main": "haruna.js",
+  "description": "discord bot built on discord.js based on haruna from Kancolle",
+  "main": "index.js",
   "scripts": {
     "test": "mocha"
   },
-  "author": "",
+  "author": "Jortathlon",
   "license": "ISC",
   "dependencies": {
-    "date-and-time": "^0.5.0",
-    "discord.js": "^11.1.0",
-    "node-opus": "^0.2.6",
+    "discord.js": "^11.2.1",
+    "node-opus": "^0.2.7",
     "sodium": "^2.0.1",
-    "ytdl-core": "^0.14.4"
+    "ytdl-core": "^0.17.1"
   }
 }

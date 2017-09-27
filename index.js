@@ -6,32 +6,46 @@ const Messaging = require('./messaging').Messaging;
 const Logger = require('./logger').Logger;
 const Commands = require('./commands').Commands;
 const MusicCommands = require('./musicCommands').MusicCommands;
+const ConversationEngine = require('./conversations');
 const Discord = require('discord.js');
+const fs = require('fs');
 
 let _haruna = new Discord.Client({'autoReconnect': true});
 
+//local storage (in json)
+let _jsonLocalStorage = null;
 //intervals
 let _hourlyInterval = null;
+//conversation engine
+let _conversationEngine = null;
+let _conversationEngineActive = false;
+
+try {
+    _hourlyInterval = require('./json/localStorage.json').intervals.hourly.intervalChannel;
+} catch(error) {
+    Logger.log('ERROR', 'JSON error reading intervals.hourly.intervalChannel: ' + error);
+    _hourlyInterval = null;
+}
 
 //string arrays of files
-module.exports.pouts = require('./paths/pouts.json').paths;
-module.exports.smugs = require('./paths/smugs.json').paths;
-module.exports.selfies = require('./paths/selfies.json').paths;
-module.exports.idleTexts = require('./paths/idles.json').paths;
-module.exports.comfortTexts = require('./paths/comforts.json').paths;
+module.exports.pouts = require('./json/paths/pouts.json').paths;
+module.exports.smugs = require('./json/paths/smugs.json').paths;
+module.exports.selfies = require('./json/paths/selfies.json').paths;
+module.exports.idleTexts = require('./json/paths/idles.json').paths;
+module.exports.comfortTexts = require('./json/paths/comforts.json').paths;
 
-let _hourlyTexts = require('./texts/hourly.json').texts;
+let _hourlyTexts = require('./json/hourly.json').texts;
 
 
 module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
     let response = '';
-    channel.bulkDelete(numberOfMessages)
+    channel.bulkDelete(numberOfMessages, true)
         .then(message => {
             Logger.log('SUCCESS', 'deleted 100 messages from ' + channel);
         }).catch(reason => {
-            response = 'Something went wrong on my end. Oops desu!';
-            Logger.log('ERROR', `Something went wrong purging messages: ${reason} desu :c`);
-        });
+        response = 'Something went wrong on my end :c';
+        Logger.log('ERROR', `Something went wrong purging messages: ${reason} desu :c`);
+    });
     return response;
 };
 
@@ -53,12 +67,12 @@ let _sendShutdownMessage = function(channel) {
 module.exports.generateSelfInvite = function(channel) {
     _haruna.generateInvite(238283776)
         .then(link => {
-            Logger.log('INFO', 'Invite link sent to ' + channel + '<3');
+            Logger.log('INFO', 'Invite link sent to ' + channel + ' <3');
             Messaging.sendTextMessageToChannel(`You can invite me from ${link} desu! <3`, channel);
         }).catch(reason => {
-            Logger.log('ERROR', `Error generating invite ${reason}`);
-            Messaging.sendTextMessageToChannel('Oops, something went wrong desu! :c', channel);
-        });
+        Logger.log('ERROR', `Error generating invite ${reason}`);
+        Messaging.sendTextMessageToChannel('Oops, something went wrong desu! :c', channel);
+    });
 };
 
 module.exports.setGameWithResponse = function(game) {
@@ -67,33 +81,76 @@ module.exports.setGameWithResponse = function(game) {
     return response;
 };
 
-module.exports.setInterval = function(type, channelToMessage) {
-   let interval = 60000; //60000 = one minute
+module.exports.toggleIntervals = function(type, channelToMessage) {
+    let response = '';
     if(type === 'hourly') {
-        _hourlyInterval = _haruna.setInterval(_hourlyNotifications, interval, channelToMessage);
+        if(!_hourlyInterval) {
+            _setInterval(type, channelToMessage);
+            response = `Set hourly messages! Use \`\`-hourly\`\` again to disable! <3`;
+        } else {
+            _clearInterval(type, channelToMessage);
+            _hourlyInterval = null;
+            _jsonLocalStorage = require('./json/localStorage.json');
+            _jsonLocalStorage.intervals.hourly = {};
+            _writeToLocalStorage(_jsonLocalStorage);
+            response = `Cleared hourly messages! Use \`\`-hourly\`\` again to enable! <3`;
+        }
+    } else {
+        //handle other types
+    }
+    return response;
+};
+
+module.exports.setConversationEngineActive = function() {
+    _conversationEngineActive = !_conversationEngineActive;
+    if(_conversationEngineActive) {
+        return `Haruna will now chat with you! <3`;
+    } else {
+        return `Haruna will return to only responding to commands! <3`;
     }
 };
 
-module.exports.clearInterval = function(type) {
-    if(type === 'hourly') {
-        _haruna.clearInterval(_hourlyInterval);
-    }
+let _writeToLocalStorage = function(obj) {
+    let jsonObj = JSON.stringify(obj, null, 2);
+    fs.writeFile('./json/localStorage.json', jsonObj, err => {
+        if(err) {
+            Logger.log('ERROR', 'There was an error writing to json file: ' + err);
+            return;
+        }
+        Logger.log('FS', 'Successfully wrote to storage! <3');
+    });
 };
+
 
 //***********************
 //Bot start up
 //***********************
 _haruna.on('ready', function() {
     Logger.log('INFO', 'Haruna is standing by in ' + _haruna.guilds.size + ' guilds!');
-    _setGameWithResponse('');
+    _init();
 });
+
+let _init = function() {
+    _setGameWithResponse();
+    _setInterval();
+    _conversationEngine = new ConversationEngine.ConversationEngine();
+};
 
 let _setGameWithResponse = function(game) {
     let playing, response = '';
-    if(game.length > 1) {
+    if(game !== undefined) {
         playing = game;
+        _jsonLocalStorage = require('./json/localStorage.json');
+        _jsonLocalStorage.info.nowPlaying = playing;
+        _writeToLocalStorage(_jsonLocalStorage);
     } else {
-        playing = `Jortathlon's Secretary Ship`;
+        try {
+            playing = require('./json/localStorage.json').info.nowPlaying;
+            Logger.log('FS', 'Successfully read nowPlaying from storage!');
+        } catch(error) {
+            Logger.log('FS', 'Error reading from storage: ' + error);
+            playing = 'Jortathlon\'s Secretary Ship <3';
+        }
     }
 
     let status = {
@@ -101,7 +158,7 @@ let _setGameWithResponse = function(game) {
         afk: false,
         game: {
             name: playing,
-            url: ''
+            url: 'http://kancolle.wikia.com/wiki/Haruna'
         }
     };
 
@@ -110,33 +167,70 @@ let _setGameWithResponse = function(game) {
         response = 'Game set! <3';
     }).catch(error => {
         Logger.log('ERROR', 'Something went wrong setting the game: ' + error + ' :c');
-        response =  `Game not set, check the captain's log <3`;
+        response = `Game not set, check the captain's log <3`;
     });
 
     return response;
 };
 
+let _setInterval = function(type, channelToMessage) {
+    let minute = 60000;
+    if(type !== undefined && channelToMessage !== undefined) {
+        if(type === 'hourly') {
+            _hourlyInterval = _haruna.setInterval(_hourlyNotifications, minute, channelToMessage);
+            _jsonLocalStorage = require('./json/localStorage.json');
+            _jsonLocalStorage.intervals.hourly = {
+                "id": channelToMessage.id,
+                "username": channelToMessage.username,
+                "discriminator": channelToMessage.discriminator,
+                "avatar": channelToMessage.avatar,
+                "bot": channelToMessage.bot,
+                "lastMessageID": channelToMessage.lastMessageID,
+                "lastMessage": channelToMessage.lastMessage.toString()
+            };
+            _writeToLocalStorage(_jsonLocalStorage);
+        }
+        Logger.log('FS', 'Successfully saved interval to local storage! <3');
+    } else {
+        try {
+            _jsonLocalStorage = require('./json/localStorage.json');
+            let JSONData = _jsonLocalStorage.intervals.hourly;
+            if(JSONData.id !== undefined) {
+                let data = {
+                    id: JSONData.id,
+                    username: JSONData.username,
+                    discriminator: JSONData.discriminator,
+                    avatar: JSONData.avatar,
+                    bot: JSONData.bot,
+                    lastMessageID: JSONData.lastMessageID,
+                    lastMessage: JSONData.lastMessage
+                };
+                let user = new Discord.User(_haruna, data);
+                _hourlyInterval = _haruna.setInterval(_hourlyNotifications, minute, user);
+                Logger.log('FS', `Set intervals for user ${user.username}! <3`);
+            }
+        } catch(error) {
+            Logger.log('ERROR', 'Error creating data obj for interval: ' + error);
+        }
+    }
+};
+
 let _hourlyNotifications = function(channelToMessage) {
     let now = new Date();
-    let currentTime = _formatTime(now.getUTCMinutes(), now.getUTCHours());
-    console.log(currentHour + ':' + currentMinute.toFixed(2) + ': called #_hourlyNotifications');
+    let currentTime = {hour: now.getHours(), minute: now.getUTCMinutes()};
 
     if(currentTime.minute === 0) {
-        let response = _hourlyTexts[parseInt(currentTime.hour)];
+        let response = _hourlyTexts[currentTime.hour];
         Messaging.sendTextMessageToChannel(response, channelToMessage);
     }
 };
 
-let _formatTime = function(currentMinute, currentHour) {
-    if(currentMinute < 10) {
-        currentMinute = '0' + currentMinute;
+let _clearInterval = function(type) {
+    if(type === 'hourly') {
+        _haruna.clearInterval(_hourlyInterval);
     }
-    if(currentHour < 10) {
-        currentHour = '0' + currentHour;
-    }
-
-    return {hour: currentHour, minute: currentMinute};
 };
+
 
 //***********************
 //Message received
@@ -150,35 +244,32 @@ _haruna.on('message', function(message) {
         response = MusicCommands.processMessageIfCommandExists(message);
     } else {
         response = SubStringCommands.processMessageIfCommandExists(message);
+        if(_conversationEngineActive && response === '') {
+            response = _conversationEngine.respond(message);
+        }
     }
 
-    if(_hasResponseToGive(response)) {
-        _respondViaChannel(response, message.channel);
+    if((typeof response) === 'string') {
+        if(_hasResponseToGive(response)) {
+            _respondViaChannel(response, message.channel);
+        }
+    } else {
+        try {
+            Promise.resolve(response).then(success => {
+                response = success;
+                if(_hasResponseToGive(response)) {
+                    _respondViaChannel(response, message.channel);
+                }
+            }).catch(failure => {
+                response = failure;
+                if(_hasResponseToGive(response)) {
+                    _respondViaChannel(response, message.channel);
+                }
+            });
+        } catch(error) {
+            Logger.log('ERROR', 'Error resolving promise: ' + error);
+        }
     }
-
-    // if(message.content.includes('+play')) {
-    //     let song = message.content.slice(6);
-    //     Logger.log('MUSIC', 'got a request');
-    //     const voiceChannel = message.member.voiceChannel;
-    //     if(!voiceChannel) {
-    //         _respondViaChannel('Please be in a voice channel first desu! <3', message.channel);
-    //     } else {
-    //         voiceChannel.join()
-    //             .then(connection => {
-    //                 Logger.log('MUSIC', 'connected to ' + voiceChannel.name);
-    //                 const stream = yt(song, {audioonly: true});
-    //                 const dispatcher = connection.playStream(stream);
-    //                 dispatcher.on('end', () => {
-    //                     Logger.log('MUSIC', 'left ' + message.channel);
-    //                     voiceChannel.leave();
-    //                 });
-    //             })
-    //             .catch(error => {
-    //                 Logger.log('ERR', error);
-    //                 _respondViaChannel('there was an error desu! ;c' ,message.channel);
-    //             });
-    //     }
-    // }
 });
 
 let _isGenericCommand = function(content) {
@@ -194,7 +285,7 @@ let _hasResponseToGive = function(response) {
 };
 
 let _thereWasNoFuckUp = function(hopefullyThisIsAString) {
-    return hopefullyThisIsAString !== undefined;
+    return (typeof hopefullyThisIsAString) === 'string';
 };
 
 let _respondViaChannel = function(response, channel) {
@@ -206,8 +297,8 @@ let _respondViaChannel = function(response, channel) {
 };
 
 let _isImage = function(response) {
-    return response.endsWith(".png") || response.endsWith(".jpg") || response.endsWith(".gif")
-        || response.endsWith(".jpeg");
+    return response.endsWith(".png") || response.endsWith(".jpg")
+        || response.endsWith(".gif") || response.endsWith(".jpeg");
 };
 
 
@@ -226,8 +317,33 @@ _haruna.on('guildDelete', function(guild) {
     Logger.log('INFO', 'Haruna has left ' + guild.name + '! Now standing by in ' + _haruna.guilds.size + ' guilds! <3');
 });
 
+
+//***********************
+//Disconnect
+//***********************
+_haruna.on('disconnect', function(reason) {
+    Logger.log('INFO', 'Haruna has disconnected: ' + reason);
+});
+
+
+//***********************
+//Reconnect
+//***********************
+_haruna.on('reconnecting', function() {
+    Logger.log('INFO', 'Haruna is reconnecting... <3');
+});
+
+
+//***********************
+//Error
+//***********************
+_haruna.on('error', function(error) {
+    Logger.log('ERROR', `Haruna encountered a problem: ${error}`);
+});
+
+
 //load token from auth.json
-_haruna.login(require('./auth.json').harunaLogin)
+_haruna.login(require('./json/auth.json').harunaLogin)
     .then(message => {
         Logger.log('INFO', 'Login success! \<3');
     })

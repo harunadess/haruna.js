@@ -1,11 +1,6 @@
 /**
  * Created by Jorta on 25/06/2017.
  */
-/*
- *For recognising substring commands that a user may type in text
- channels of the chat.
- */
-
 const Logger = require('./logger').Logger;
 
 let _content;
@@ -17,7 +12,7 @@ module.exports.SubStringCommands = {
         let response = '';
         if(_notFromBot()) {
             if(_isHeartCommand()) {
-                Logger.logUserMessage(message); //fixme: not happy with repeated code, but can't be outside if-else chain
+                Logger.logUserMessage(message);
                 response = '\<3';
             } else if(_isAyyCommand()) {
                 Logger.logUserMessage(message);
@@ -41,7 +36,7 @@ let _notFromBot = function() {
 };
 
 let _isHeartCommand = function() {
-    return this._content.includes('<3') && this._author.id === require('./auth.json').admiralID;
+    return this._content.includes('<3') && this._author.id === require('./json/auth.json').admiralID;
 };
 
 let _isAyyCommand = function() {

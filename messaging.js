@@ -7,14 +7,14 @@ module.exports.Messaging = {
     sendTextMessageToChannel: function(messageContent, channel) {
         channel.send(messageContent)
             .then(message =>
-                Logger.log('CMD', `Sent message: ${message.cleanContent}`)
+                Logger.log('MSG', `Sent message: ${message.cleanContent}`)
             ).catch(console.error);
     },
 
     sendImageToChannel: function(imagePath, channel) {
-        channel.send('', { file: imagePath })
+        channel.send('', {file: imagePath})
             .then(message =>
-                Logger.log('CMD', `Sent message: ${message.attachments.first().filename}`)
+                Logger.log('MSG_IMG', `Sent message: ${message.attachments.first().filename}`)
             ).catch(console.error);
     }
 };

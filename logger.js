@@ -13,7 +13,7 @@ module.exports.Logger = {
     }
 };
 
-let _assembleLogMessage = function (level, message) {
+let _assembleLogMessage = function(level, message) {
     return '[' + level + ']' + " " + message;
 };
 

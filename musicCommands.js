@@ -35,10 +35,10 @@ let _musicCommando = {
                 return `You must be in a voice channel first desu!`;
             }
             if(_alreadyInVoiceChannel()) {
-                return `Haruna is already bound to \`\`#${mp.getVoiceChannel().name}\`\`!`
+                return `Haruna is already bound to \`\`#${mp.getVoiceBroadcastChannel().name}\`\`!`
             } else {
                 _joinClientToVoiceChannel();
-                return `Haruna is now bound to the voice channel \`\`#${mp.getVoiceChannel().name}\`\`!`;
+                return `Haruna is now bound to the voice channel \`\`#${mp.getVoiceBroadcastChannel().name}\`\`!`;
             }
         },
         'description': 'haruna joins the vc channel you are in'
@@ -51,15 +51,15 @@ let _musicCommando = {
 
     'leave': {
         'function': function() {
-            let voiceChannelName = mp.getVoiceChannel().name;
+            let voiceChannelName = mp.getVoiceBroadcastChannel().name;
             _clientLeaveVoiceChannel();
             return `Haruna is has left the voice channel and is no longer bound to \`\`#${voiceChannelName}\`\`!`;
         },
         'description': 'haruna leaves vc'
     },
     'l': {
-      'function': function() {
-      }
+        'function': function() {
+        }
     },
 
     'queue': {
@@ -94,11 +94,11 @@ let _musicCommando = {
 
     'pause': {
         'function': function() {
-           if(_alreadyInVoiceChannel()) {
-               return mp.pause();
-           } else {
-               return `${_author}, Haruna must be in a voice channel first desu!`;
-           }
+            if(_alreadyInVoiceChannel()) {
+                return mp.pause();
+            } else {
+                return `${_author}, Haruna must be in a voice channel first desu!`;
+            }
         },
         'description': 'pauses audio'
     },
@@ -106,6 +106,19 @@ let _musicCommando = {
         'function': function() {
         }
     },
+
+    'skip': {
+        'function': function() {
+            return mp.skip();
+        },
+        'description': 'skips current track, plays next song, if one exists'
+    },
+
+    'sk': {
+        'function': function() {
+        }
+    },
+
 
     'stop': {
         'function': function() {
@@ -163,6 +176,15 @@ let _musicCommando = {
             return response;
         },
         'description': 'displays this'
+    },
+
+    'setvolume': {
+        'function': function() {
+            let volume = _args[0];
+            volume /= 100;
+            return mp.setVolume(volume);
+        },
+        'description': 'set volume to a value between 0% and 100% (default: 20%)'
     }
 };
 
@@ -171,19 +193,18 @@ let _authorNotInVoiceChannel = function() {
 };
 
 let _alreadyInVoiceChannel = function() {
-    return mp.getVoiceChannel();
+    return mp.getVoiceBroadcastChannel();
 };
 
 let _joinClientToVoiceChannel = function() {
-    mp.setVoiceChannel(_authorVoiceChannel);
-    mp.getVoiceChannel().join()
+    mp.setVoiceBroadcastChannel(_authorVoiceChannel);
+    mp.getVoiceBroadcastChannel().join()
         .then(connection => {
             mp.setConnection(connection);
             return `Haruna is connected to ${_authorVoiceChannel} desu!`;
         })
         .catch(error => {
             mp.setConnection(null);
-            this.leave();
             Logger.log('ERR', 'Error creating connection desu: ' + error);
             return `There was an error creating a connection desu!`;
         });
@@ -191,9 +212,9 @@ let _joinClientToVoiceChannel = function() {
 
 let _clientLeaveVoiceChannel = function() {
     if(mp.getConnection()) {
-        mp.getVoiceChannel().leave();
+        mp.getVoiceBroadcastChannel().leave();
     }
-    mp.setVoiceChannel(undefined);
+    mp.setVoiceBroadcastChannel(undefined);
 };
 
 let _generateHelpMessage = function() {
