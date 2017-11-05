@@ -1,15 +1,15 @@
-const Logger = require('./logger').Logger;
-const HarunaID = require('./json/auth.json').harunaID;
-const AdmiralID = require('./json/auth.json').admiralID;
+const Logger = require('../logger').Logger;
+const HarunaID = require('../json/auth.json').harunaID;
+const AdmiralID = require('../json/auth.json').admiralID;
 
 module.exports.ConversationEngine = (function() {
     let possibleResponses = {};
     function ConversationEngine() {
         possibleResponses = {
             greetings: {
-                greets: require('./json/conversationOptions.json').greets,
-                goodbyes: require('./json/conversationOptions.json').goodbyes,
-                feelings: require('./json/conversationOptions.json').feelings
+                greets: require('../json/conversationOptions.json').greets,
+                goodbyes: require('../json/conversationOptions.json').goodbyes,
+                feelings: require('../json/conversationOptions.json').feelings
             }
         }
     }

@@ -1,12 +1,12 @@
 /**
  * Created by Jorta on 25/06/2017.
  */
-const SubStringCommands = require('./subStringCommands').SubStringCommands;
+const SubStringCommands = require('./commands/subStringCommands').SubStringCommands;
 const Messaging = require('./messaging').Messaging;
 const Logger = require('./logger').Logger;
-const Commands = require('./commands').Commands;
-const MusicCommands = require('./musicCommands').MusicCommands;
-const ConversationEngine = require('./conversations');
+const Commands = require('./commands/commands').Commands;
+const MusicCommands = require('./commands/musicCommands').MusicCommands;
+const ConversationEngine = require('./commands/conversations');
 const Discord = require('discord.js');
 const fs = require('fs');
 
@@ -91,7 +91,7 @@ module.exports.toggleIntervals = function(type, channelToMessage) {
             _clearInterval(type, channelToMessage);
             _hourlyInterval = null;
             _jsonLocalStorage = require('./json/localStorage.json');
-            _jsonLocalStorage.intervals.hourly = {};
+            _jsonLocalStorage.intervals.hourly = undefined;
             _writeToLocalStorage(_jsonLocalStorage);
             response = `Cleared hourly messages! Use \`\`-hourly\`\` again to enable! <3`;
         }
@@ -195,7 +195,7 @@ let _setInterval = function(type, channelToMessage) {
         try {
             _jsonLocalStorage = require('./json/localStorage.json');
             let JSONData = _jsonLocalStorage.intervals.hourly;
-            if(JSONData.id !== undefined) {
+            if(JSONData !== undefined) {
                 let data = {
                     id: JSONData.id,
                     username: JSONData.username,
@@ -249,26 +249,12 @@ _haruna.on('message', function(message) {
         }
     }
 
-    if((typeof response) === 'string') {
+    if(_thereWasNoFuckUp(response)) {
         if(_hasResponseToGive(response)) {
             _respondViaChannel(response, message.channel);
         }
     } else {
-        try {
-            Promise.resolve(response).then(success => {
-                response = success;
-                if(_hasResponseToGive(response)) {
-                    _respondViaChannel(response, message.channel);
-                }
-            }).catch(failure => {
-                response = failure;
-                if(_hasResponseToGive(response)) {
-                    _respondViaChannel(response, message.channel);
-                }
-            });
-        } catch(error) {
-            Logger.log('ERROR', 'Error resolving promise: ' + error);
-        }
+        Logger.log('INFO', 'was not a string - ignore');
     }
 });
 

@@ -7,9 +7,15 @@ build/Release
 #dependency directories
 node_modules
 
-
 #git shit
 .idea/
 
 # Configs
 auth.json
+
+#Ignore files
+*.png
+*.json
+*.gif
+*.txt
+test.js

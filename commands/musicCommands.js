@@ -1,5 +1,5 @@
-const _musicPlayer = require('./musicPlayer');
-const Logger = require('./logger').Logger;
+const _musicPlayer = require('../musicplayer/musicPlayer');
+const Logger = require('../logger').Logger;
 let _content, _channel, _authorVoiceChannel, _author, _guild, _command, _args;
 let mp = new _musicPlayer.MusicPlayer();
 
@@ -9,6 +9,7 @@ module.exports.MusicCommands = {
         _initialiseVariables(message);
         if(_commandExists(_command)) {
             response = _musicCommando[_command].function();
+            mp.setChannel(_channel);
         }
         return response;
     }
@@ -35,10 +36,10 @@ let _musicCommando = {
                 return `You must be in a voice channel first desu!`;
             }
             if(_alreadyInVoiceChannel()) {
-                return `Haruna is already bound to \`\`#${mp.getVoiceBroadcastChannel().name}\`\`!`
+                return `Haruna is already bound to \`\`#${mp.getVoiceChannel().name}\`\`!`
             } else {
                 _joinClientToVoiceChannel();
-                return `Haruna is now bound to the voice channel \`\`#${mp.getVoiceBroadcastChannel().name}\`\`!`;
+                return `Haruna is now bound to the voice channel \`\`#${mp.getVoiceChannel().name}\`\`!`;
             }
         },
         'description': 'haruna joins the vc channel you are in'
@@ -51,9 +52,13 @@ let _musicCommando = {
 
     'leave': {
         'function': function() {
-            let voiceChannelName = mp.getVoiceBroadcastChannel().name;
-            _clientLeaveVoiceChannel();
-            return `Haruna is has left the voice channel and is no longer bound to \`\`#${voiceChannelName}\`\`!`;
+            let voiceChannel = mp.getVoiceChannel();
+            if(voiceChannel !== undefined) {
+                _clientLeaveVoiceChannel();
+                return `Haruna is has left the voice channel and is no longer bound to \`\`#${voiceChannel.name}\`\`!`;
+            } else {
+                return `Haruna is not in a channel yet desu!`;
+            }
         },
         'description': 'haruna leaves vc'
     },
@@ -65,7 +70,8 @@ let _musicCommando = {
     'queue': {
         'function': function() {
             if(_args[0]) {
-                return mp.addToEnd(_args[0], _author);
+                mp.addToEnd(_args[0], _author);
+                // return '';
             } else {
                 return `${_author}, if you want to add something to the queue, you must give Haruna a URL!`;
             }
@@ -80,9 +86,17 @@ let _musicCommando = {
     'play': {
         'function': function() {
             if(_alreadyInVoiceChannel()) {
-                return mp.play();
+                Logger.log('Mcomm', 'before play');
+                mp.play();
+                Logger.log('Mcomm', 'after play');
+                // return '';
             } else {
-                return `${_author}, Haruna must be in a voice channel first desu!`;
+                Promise.resolve(_joinClientToVoiceChannel()).then(() => {
+                    mp.play();
+                    // return '';
+                }).catch(error => {
+                    return error;
+                });
             }
         },
         'description': 'plays the current song in the queue'
@@ -95,7 +109,7 @@ let _musicCommando = {
     'pause': {
         'function': function() {
             if(_alreadyInVoiceChannel()) {
-                return mp.pause();
+                mp.pause();
             } else {
                 return `${_author}, Haruna must be in a voice channel first desu!`;
             }
@@ -109,7 +123,7 @@ let _musicCommando = {
 
     'skip': {
         'function': function() {
-            return mp.skip();
+            // mp.skip();
         },
         'description': 'skips current track, plays next song, if one exists'
     },
@@ -123,7 +137,7 @@ let _musicCommando = {
     'stop': {
         'function': function() {
             if(_alreadyInVoiceChannel()) {
-                return mp.stop();
+                // mp.stop();
             } else {
                 return `${_author}, Haruna must be in a voice channel first desu!`;
             }
@@ -137,7 +151,7 @@ let _musicCommando = {
 
     'showqueue': {
         'function': function() {
-            return mp.printQueue();
+            mp.getQueue();
         },
         'description': 'shows the current songs in the queue'
     },
@@ -149,7 +163,7 @@ let _musicCommando = {
 
     'remove': {
         'function': function() {
-            return mp.removeFromEnd();
+            mp.removeSongFromEnd();
         },
         'description': 'removes the last song added to the queue'
     },
@@ -161,7 +175,7 @@ let _musicCommando = {
 
     'purgequeue': {
         'function': function() {
-            return mp.clearQueue();
+            mp.clearQueue();
         },
         'description': 'removes all items after the currently playing song from the queue'
     },
@@ -182,7 +196,7 @@ let _musicCommando = {
         'function': function() {
             let volume = _args[0];
             volume /= 100;
-            return mp.setVolume(volume);
+            mp.setVolume(volume);
         },
         'description': 'set volume to a value between 0% and 100% (default: 20%)'
     }
@@ -193,18 +207,18 @@ let _authorNotInVoiceChannel = function() {
 };
 
 let _alreadyInVoiceChannel = function() {
-    return mp.getVoiceBroadcastChannel();
+    return mp.getVoiceChannel();
 };
 
 let _joinClientToVoiceChannel = function() {
-    mp.setVoiceBroadcastChannel(_authorVoiceChannel);
-    mp.getVoiceBroadcastChannel().join()
+    mp.setVoiceChannel(_authorVoiceChannel);
+    return mp.getVoiceChannel().join()
         .then(connection => {
             mp.setConnection(connection);
             return `Haruna is connected to ${_authorVoiceChannel} desu!`;
         })
         .catch(error => {
-            mp.setConnection(null);
+            mp.setConnection(undefined);
             Logger.log('ERR', 'Error creating connection desu: ' + error);
             return `There was an error creating a connection desu!`;
         });
@@ -212,9 +226,9 @@ let _joinClientToVoiceChannel = function() {
 
 let _clientLeaveVoiceChannel = function() {
     if(mp.getConnection()) {
-        mp.getVoiceBroadcastChannel().leave();
+        mp.getVoiceChannel().leave();
     }
-    mp.setVoiceBroadcastChannel(undefined);
+    mp.setVoiceChannel(undefined);
 };
 
 let _generateHelpMessage = function() {
