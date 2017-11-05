@@ -17,4 +17,4 @@ module.exports.Messaging = {
                 Logger.log('MSG_IMG', `Sent message: ${message.attachments.first().filename}`)
             ).catch(console.error);
     }
-};
+};//todo:delet

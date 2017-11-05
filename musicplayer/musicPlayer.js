@@ -374,7 +374,7 @@ module.exports.MusicPlayer = (function() {
             this.musicInfo.send(`The queue is empty desu! <3`);
         }
     };
-
+//todo:delet
     MusicPlayer.prototype._songsInQueue = function() {
         return this._queue.songs.length;
     };

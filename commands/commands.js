@@ -1,7 +1,7 @@
 /**
  * Created by Jorta on 20/06/2017.
  */
-
+//todo: delet
 let _haruna = require('../index.js'); //for access to image stores and client methods
 let _content, _channel, _author, _guild, _command, _args;
 

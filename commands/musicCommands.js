@@ -2,7 +2,7 @@ const _musicPlayer = require('../musicplayer/musicPlayer');
 const Logger = require('../logger').Logger;
 let _content, _channel, _authorVoiceChannel, _author, _guild, _command, _args;
 let mp = new _musicPlayer.MusicPlayer();
-
+//todo:delet
 module.exports.MusicCommands = {
     processMessageIfCommandExists: function(message) {
         let response = '';

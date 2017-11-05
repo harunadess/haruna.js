@@ -1,7 +1,7 @@
 const Logger = require('../logger').Logger;
 const HarunaID = require('../json/auth.json').harunaID;
 const AdmiralID = require('../json/auth.json').admiralID;
-
+//todo:delet
 module.exports.ConversationEngine = (function() {
     let possibleResponses = {};
     function ConversationEngine() {

@@ -12,7 +12,7 @@ module.exports.Logger = {
         _log('CMD', logMessage);
     }
 };
-
+//todo:delt
 let _assembleLogMessage = function(level, message) {
     return '[' + level + ']' + " " + message;
 };

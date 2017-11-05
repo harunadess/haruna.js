@@ -261,7 +261,7 @@ _haruna.on('message', function(message) {
 let _isGenericCommand = function(content) {
     return content.indexOf('-') === 0; //The '-' character is the command character e.g. '-hello'
 };
-
+//todo:delt
 let _isMusicCommand = function(content) {
     return content.indexOf('+') === 0; //Different command for music
 };
