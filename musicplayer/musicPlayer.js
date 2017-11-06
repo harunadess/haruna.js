@@ -497,6 +497,7 @@ module.exports.MusicPlayer = (function() {
     MusicPlayer.prototype.clearQueue = function() {
         this._queue.songs = [];
         this._queue.index = -1;
+        this._player.dispatcher.end();
         this.musicInfo.send(`Haruna has cleared the queue!`);
     };
 
