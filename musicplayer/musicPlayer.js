@@ -278,7 +278,7 @@ module.exports.MusicPlayer = (function() {
         this._player = {
             connection: undefined,
             dispatcher: undefined,
-            stream: undefined,
+            stream: undefined
         };
 
         this._options = {
@@ -305,7 +305,7 @@ module.exports.MusicPlayer = (function() {
            }).catch(error => {
                console.log(error);
                return `Oops, there was an error ${error}`;
-           })
+           });
         } else {
             Logger.log('MUSIC', 'Invalid youtube link supplied');
             return `Please only use valid youtube links desu!`;
@@ -338,7 +338,7 @@ module.exports.MusicPlayer = (function() {
     };
 
     MusicPlayer.prototype.getQueue = function() {
-		let printedQueue = 'There are ' + this._queue.songs.length + ' songs in the queue!\n```==Play Queue==\n';
+       let printedQueue = 'There are ' + this._queue.songs.length + ' songs in the queue!\n```==Play Queue==\n';
         if(this._hasSongsInQueue()) {
             if(this._queue.index > -1) {
                 printedQueue += 'Now playing: ' + (this._queue.index + 1) + '. ' + this._queue.songs[this._queue.index].title
@@ -366,7 +366,7 @@ module.exports.MusicPlayer = (function() {
     MusicPlayer.prototype.removeSongFromEnd = function() {
         if(this._hasSongsInQueue()) {
             let removedSong = this._queue.songs.pop();
-            Logger.log('MUSIC' `Removed ${removedSong.title} from the queue!`);
+            Logger.log('MUSIC', `Removed ${removedSong.title} from the queue!`);
             let songsInQueue = this._songsInQueue();
             this.musicInfo.send(`Removed \`\`${removedSong.title} requested by ${removedSong.requester}\`\` from the queue.
              There are now ${songsInQueue} in the queue! <3`);
@@ -374,7 +374,7 @@ module.exports.MusicPlayer = (function() {
             this.musicInfo.send(`The queue is empty desu! <3`);
         }
     };
-//todo:delet
+
     MusicPlayer.prototype._songsInQueue = function() {
         return this._queue.songs.length;
     };
@@ -403,8 +403,8 @@ module.exports.MusicPlayer = (function() {
             } else {
                 //leave and reset
                 this.clearQueue();
-				this.musicInfo.send(`Queue ended, leaving vc <3`);
-				this.voiceChannel.leave();
+                this.musicInfo.send(`Queue ended, leaving vc <3`);
+                this._voiceChannel.leave();
             }
         });
         this._player.dispatcher.on('error', error => {
@@ -416,8 +416,8 @@ module.exports.MusicPlayer = (function() {
 
     //note: at this point of first play, dispatcher will always be undefined
     MusicPlayer.prototype._isPrepared = function() {
-        return (this._player.connection !== undefined &&
-            this._player.dispatcher !== undefined);
+        return (this._player.connection !== undefined
+            && this._player.dispatcher !== undefined);
     };
 
     MusicPlayer.prototype._createAudioStream = function() {
@@ -429,8 +429,10 @@ module.exports.MusicPlayer = (function() {
     };
 
     MusicPlayer.prototype._play = function() {
-        this._player.dispatcher = this._player.connection.playStream(this._player.stream,
-            { volume: this._options.volume });
+        this._player.dispatcher = this._player.connection.playStream(
+            this._player.stream,
+            { volume: this._options.volume }
+        );
         Logger.log('MUSIC', 'Playing...');
     };
 
@@ -451,7 +453,7 @@ module.exports.MusicPlayer = (function() {
 
     MusicPlayer.prototype.skip = function() {
         let current = this.getCurrentSong();
-        this.musicInfo.send(`Skipping ${current.title}...`);
+        this.musicInfo.send(`Skipping \`\`${current.title}\`\`...`);
         this._player.stream.end();
     };
 
@@ -505,16 +507,3 @@ let Queue = (function() {
 
     return Queue;
 })(this.Queue || (this.Queue = {}));
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,8 +1,8 @@
 const _musicPlayer = require('../musicplayer/musicPlayer');
 const Logger = require('../logger').Logger;
-let _content, _channel, _authorVoiceChannel, _author, _guild, _command, _args;
+let _args, _author, _authorVoiceChannel, _channel, _command, _content, _guild;
 let mp = new _musicPlayer.MusicPlayer();
-//todo:delet
+
 module.exports.MusicCommands = {
     processMessageIfCommandExists: function(message) {
         let response = '';
@@ -36,7 +36,7 @@ let _musicCommando = {
                 return `You must be in a voice channel first desu!`;
             }
             if(_alreadyInVoiceChannel()) {
-                return `Haruna is already bound to \`\`#${mp.getVoiceChannel().name}\`\`!`
+                return `Haruna is already bound to \`\`#${mp.getVoiceChannel().name}\`\`!`;
             } else {
                 _joinClientToVoiceChannel();
                 return `Haruna is now bound to the voice channel \`\`#${mp.getVoiceChannel().name}\`\`!`;
@@ -46,6 +46,7 @@ let _musicCommando = {
     },
     'j': {
         'function': function() {
+            //todo: intement
 
         }
     },
@@ -64,6 +65,7 @@ let _musicCommando = {
     },
     'l': {
         'function': function() {
+            //todo: intement
         }
     },
 
@@ -80,16 +82,15 @@ let _musicCommando = {
     },
     'q': {
         'function': function() {
+            //todo: intement
         }
     },
 
     'play': {
         'function': function() {
             if(_alreadyInVoiceChannel()) {
-                Logger.log('Mcomm', 'before play');
                 mp.play();
                 Logger.log('Mcomm', 'after play');
-                // return '';
             } else {
                 Promise.resolve(_joinClientToVoiceChannel()).then(() => {
                     mp.play();
@@ -103,6 +104,7 @@ let _musicCommando = {
     },
     'p': {
         'function': function() {
+            //todo: intement
         }
     },
 
@@ -118,18 +120,20 @@ let _musicCommando = {
     },
     'pa': {
         'function': function() {
+            //todo: intement
         }
     },
 
     'skip': {
         'function': function() {
-            // mp.skip();
+            mp.skip();
         },
         'description': 'skips current track, plays next song, if one exists'
     },
 
     'sk': {
         'function': function() {
+            //todo: intement
         }
     },
 
@@ -137,7 +141,7 @@ let _musicCommando = {
     'stop': {
         'function': function() {
             if(_alreadyInVoiceChannel()) {
-                // mp.stop();
+                mp.stop();
             } else {
                 return `${_author}, Haruna must be in a voice channel first desu!`;
             }
@@ -146,6 +150,7 @@ let _musicCommando = {
     },
     's': {
         'function': function() {
+            //todo: intement
         }
     },
 
@@ -158,6 +163,7 @@ let _musicCommando = {
 
     'sq': {
         'function': function() {
+            //todo: intement
         }
     },
 
@@ -170,6 +176,7 @@ let _musicCommando = {
 
     'r': {
         'function': function() {
+            //todo: intement
         }
     },
 
@@ -181,6 +188,7 @@ let _musicCommando = {
     },
     'pq': {
         'function': function() {
+            //todo: intement
         }
     },
 
@@ -258,11 +266,3 @@ let _generateHelpMessage = function() {
 
     return response;
 };
-
-
-
-
-
-
-
-

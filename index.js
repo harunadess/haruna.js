@@ -10,7 +10,7 @@ const ConversationEngine = require('./commands/conversations');
 const Discord = require('discord.js');
 const fs = require('fs');
 
-let _haruna = new Discord.Client({'autoReconnect': true});
+let _haruna = new Discord.Client({ 'autoReconnect': true });
 
 //local storage (in json)
 let _jsonLocalStorage = null;
@@ -92,7 +92,7 @@ module.exports.toggleIntervals = function(type, channelToMessage) {
             _hourlyInterval = null;
             _jsonLocalStorage = require('./json/localStorage.json');
             _jsonLocalStorage.intervals.hourly = undefined;
-            _writeToLocalStorage(_jsonLocalStorage);
+            _writeObjectToLocalStorage(_jsonLocalStorage);
             response = `Cleared hourly messages! Use \`\`-hourly\`\` again to enable! <3`;
         }
     } else {
@@ -110,7 +110,7 @@ module.exports.setConversationEngineActive = function() {
     }
 };
 
-let _writeToLocalStorage = function(obj) {
+let _writeObjectToLocalStorage = function(obj) {
     let jsonObj = JSON.stringify(obj, null, 2);
     fs.writeFile('./json/localStorage.json', jsonObj, err => {
         if(err) {
@@ -142,7 +142,7 @@ let _setGameWithResponse = function(game) {
         playing = game;
         _jsonLocalStorage = require('./json/localStorage.json');
         _jsonLocalStorage.info.nowPlaying = playing;
-        _writeToLocalStorage(_jsonLocalStorage);
+        _writeObjectToLocalStorage(_jsonLocalStorage);
     } else {
         try {
             playing = require('./json/localStorage.json').info.nowPlaying;
@@ -188,7 +188,7 @@ let _setInterval = function(type, channelToMessage) {
                 "lastMessageID": channelToMessage.lastMessageID,
                 "lastMessage": channelToMessage.lastMessage.toString()
             };
-            _writeToLocalStorage(_jsonLocalStorage);
+            _writeObjectToLocalStorage(_jsonLocalStorage);
         }
         Logger.log('FS', 'Successfully saved interval to local storage! <3');
     } else {
@@ -206,8 +206,12 @@ let _setInterval = function(type, channelToMessage) {
                     lastMessage: JSONData.lastMessage
                 };
                 let user = new Discord.User(_haruna, data);
-                _hourlyInterval = _haruna.setInterval(_hourlyNotifications, minute, user);
-                Logger.log('FS', `Set intervals for user ${user.username}! <3`);
+                if(user === undefined) {
+                    Logger.log('FS', 'No stored interval data');
+                } else {
+                    _hourlyInterval = _haruna.setInterval(_hourlyNotifications, minute, user);
+                    Logger.log('FS', `Set intervals for user ${user.username}! <3`);
+                }
             }
         } catch(error) {
             Logger.log('ERROR', 'Error creating data obj for interval: ' + error);
@@ -217,7 +221,10 @@ let _setInterval = function(type, channelToMessage) {
 
 let _hourlyNotifications = function(channelToMessage) {
     let now = new Date();
-    let currentTime = {hour: now.getHours(), minute: now.getUTCMinutes()};
+    let currentTime = {
+        hour: now.getHours(),
+        minute: now.getUTCMinutes()
+    };
 
     if(currentTime.minute === 0) {
         let response = _hourlyTexts[currentTime.hour];
@@ -261,7 +268,7 @@ _haruna.on('message', function(message) {
 let _isGenericCommand = function(content) {
     return content.indexOf('-') === 0; //The '-' character is the command character e.g. '-hello'
 };
-//todo:delt
+
 let _isMusicCommand = function(content) {
     return content.indexOf('+') === 0; //Different command for music
 };

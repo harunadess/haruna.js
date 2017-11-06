@@ -46,4 +46,3 @@ let _isAyyCommand = function() {
 let _isFairCommand = function() {
     return this._content.includes('fair') && this._author.username.includes('merk');
 };
-

@@ -1,7 +1,7 @@
 const Logger = require('../logger').Logger;
 const HarunaID = require('../json/auth.json').harunaID;
 const AdmiralID = require('../json/auth.json').admiralID;
-//todo:delet
+
 module.exports.ConversationEngine = (function() {
     let possibleResponses = {};
     function ConversationEngine() {
@@ -11,7 +11,7 @@ module.exports.ConversationEngine = (function() {
                 goodbyes: require('../json/conversationOptions.json').goodbyes,
                 feelings: require('../json/conversationOptions.json').feelings
             }
-        }
+        };
     }
 
     ConversationEngine.prototype.respond = function(message) {
@@ -52,10 +52,10 @@ module.exports.ConversationEngine = (function() {
     };
 
     let _isAskingHowHarunaIs = function() {
-        return this._content.includes('how are you') 
-        || this._content.includes('you feeling') 
+        return this._content.includes('how are you')
+        || this._content.includes('you feeling')
         || this._content.includes('what\'s up');
-    }
+    };
 
     let _randomPositionInArray = function(array) {
         let element = array[Math.floor(Math.random()*array.length)];

@@ -1,9 +1,8 @@
 /**
  * Created by Jorta on 20/06/2017.
  */
-//todo: delet
 let _haruna = require('../index.js'); //for access to image stores and client methods
-let _content, _channel, _author, _guild, _command, _args;
+let _args, _author, _channel, _command, _content, _guild;
 
 
 module.exports.Commands = {
@@ -67,7 +66,7 @@ let _commando = {
     //dice roll
     'roll': {
         'function': function() {
-            let roll, response;
+            let response, roll;
             if(_isNumber(parseInt(_args[0]))) {
                 roll = _randomWholeNumber(parseInt(_args[0]));
             } else if(_args.length < 1) {
@@ -158,8 +157,7 @@ let _commando = {
             let response = '';
             if(_isAdmiral()) {
                 _haruna.shutdownGracefully(_channel);
-            }
-            else {
+            } else {
                 response = _author + ' sorry desu, you don\'t have permission to do that! \<3'
             }
             return response;
