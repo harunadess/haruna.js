@@ -90,11 +90,9 @@ let _musicCommando = {
         'function': function() {
             if(_alreadyInVoiceChannel()) {
                 mp.play();
-                Logger.log('Mcomm', 'after play');
             } else {
                 Promise.resolve(_joinClientToVoiceChannel()).then(() => {
                     mp.play();
-                    // return '';
                 }).catch(error => {
                     return error;
                 });

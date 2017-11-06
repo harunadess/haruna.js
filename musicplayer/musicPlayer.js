@@ -457,6 +457,27 @@ module.exports.MusicPlayer = (function() {
         this._player.stream.end();
     };
 
+    MusicPlayer.prototype.pause = function() {
+        this._player.dispatcher.pause();
+        this.musicInfo.send('Haruna is now paused!');
+    };
+
+    MusicPlayer.prototype.resume = function() {
+        this._player.dispatcher.resume();
+        this.musicInfo.send('Haruna has now resumed!');
+    };
+
+    MusicPlayer.prototype.stop = function() {
+        this.clearQueue();
+        this._player.dispatcher.end();
+        this.musicInfo.send('Haruna has stopped, and has cleared the queue! \<3');
+        this._player.stream = undefined;
+        this._player.dispatcher = undefined;
+        this._player.connection.leave();
+        this.musicInfo.send('Haruna will leave voice chat now \<3');
+        this._player.connection = undefined;
+    };
+
     MusicPlayer.prototype.getCurrentSong = function() {
         if(this._hasSongsInQueue()) {
             return this._queue.songs[this._queue.index];
@@ -499,7 +520,7 @@ module.exports.MusicPlayer = (function() {
     return MusicPlayer;
 })(this.MusicPlayer || (this.MusicPlayer = {}));
 
-let Queue = (function() {
+(function() {
     function Queue() {
         this.index = -1;
         this.songs = [];
