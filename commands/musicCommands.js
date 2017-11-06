@@ -114,7 +114,7 @@ let _musicCommando = {
                 return `${_author}, Haruna must be in a voice channel first desu!`;
             }
         },
-        'description': 'pauses audio'
+        'description': 'pauses the current track'
     },
     'pa': {
         'function': function() {
@@ -133,6 +133,14 @@ let _musicCommando = {
         'function': function() {
             //todo: intement
         }
+    },
+
+
+    'resume': {
+        'function': function() {
+            mp.resume();
+        },
+        'description': 'resumes playing current track'
     },
 
 

@@ -317,7 +317,7 @@ let _bulkDeleteFromChannel = function() {
 };
 
 let _isAdmiral = function() {
-    return _author.id === require('./json/auth.json').admiralID;
+    return _author.id === require('../json/auth.json').admiralID;
 };
 
 let _isNotPickCommandFormat = function() {

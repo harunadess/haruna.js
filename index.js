@@ -206,7 +206,7 @@ let _setInterval = function(type, channelToMessage) {
                     lastMessage: JSONData.lastMessage
                 };
                 let user = new Discord.User(_haruna, data);
-                if(user === undefined) {
+                if(user.username === undefined) {
                     Logger.log('FS', 'No stored interval data');
                 } else {
                     _hourlyInterval = _haruna.setInterval(_hourlyNotifications, minute, user);
@@ -260,8 +260,6 @@ _haruna.on('message', function(message) {
         if(_hasResponseToGive(response)) {
             _respondViaChannel(response, message.channel);
         }
-    } else {
-        Logger.log('INFO', 'was not a string - ignore');
     }
 });
 
@@ -315,15 +313,15 @@ _haruna.on('guildDelete', function(guild) {
 //Disconnect
 //***********************
 _haruna.on('disconnect', function(reason) {
-    Logger.log('INFO', 'Haruna has disconnected: ' + reason);
+    Logger.log('INFO', 'Haruna has disconnected: ' + JSON.stringify(reason));
 });
 
 
 //***********************
 //Reconnect
 //***********************
-_haruna.on('reconnecting', function() {
-    Logger.log('INFO', 'Haruna is reconnecting... <3');
+_haruna.on('reconnecting', function(connect) {
+    Logger.log('INFO', 'Haruna is reconnecting... <3 ' + JSON.stringify(connect));
 });
 
 
@@ -337,7 +335,7 @@ _haruna.on('error', function(error) {
 
 //load token from auth.json
 _haruna.login(require('./json/auth.json').harunaLogin)
-    .then(message => {
+    .then(() => {
         Logger.log('INFO', 'Login success! \<3');
     })
     .catch(error => {

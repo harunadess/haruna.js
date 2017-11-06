@@ -2,6 +2,9 @@ const YT = require('ytdl-core');
 const Logger = require('../logger').Logger;
 const Messaging = require('../messaging').Messaging;
 
+//todo: add checks so can not play after resuming
+//todo: better error handling/notification
+
 /*
 module.exports.MusicPlayer = (function() {
     function MusicPlayer() {
@@ -285,7 +288,7 @@ module.exports.MusicPlayer = (function() {
             volume: 0.2
         };
 
-        this.musicInfo = { //todo: make separate obj to avoid having ulgy obj like this
+        this.musicInfo = { //todo: make separate obj to avoid having ugly obj like this
             channel: undefined,
             messaging: Messaging,
             send: function(info) {
@@ -368,8 +371,7 @@ module.exports.MusicPlayer = (function() {
             let removedSong = this._queue.songs.pop();
             Logger.log('MUSIC', `Removed ${removedSong.title} from the queue!`);
             let songsInQueue = this._songsInQueue();
-            this.musicInfo.send(`Removed \`\`${removedSong.title} requested by ${removedSong.requester}\`\` from the queue.
-             There are now ${songsInQueue} in the queue! <3`);
+            this.musicInfo.send(`Removed \`\`${removedSong.title} requested by ${removedSong.requester}\`\` from the queue. There's now ${songsInQueue} song(s) in the queue! <3`);
         } else {
             this.musicInfo.send(`The queue is empty desu! <3`);
         }
@@ -393,6 +395,8 @@ module.exports.MusicPlayer = (function() {
     MusicPlayer.prototype.play = function() {
         this._createAudioStream();
         this._play();
+        let admiralId = require('../json/auth.json').admiralID;
+        this.musicInfo.send('<@'+ admiralId + '>, there was an error! Check the captain\'s log \<3');
 
         this._player.dispatcher.on('end', () => {
             Logger.log('MUSIC', 'Stream end');
@@ -409,6 +413,7 @@ module.exports.MusicPlayer = (function() {
         });
         this._player.dispatcher.on('error', error => {
             Logger.log('MUSIC', 'Stream error: ' + error);
+            this.musicInfo.send('@Jortathlon#9920 , there was an error, check your port logs <3');
         });
 
         this.musicInfo.send(`Now playing: \`\`${this.getCurrentSong().title}\`\``);
@@ -473,7 +478,8 @@ module.exports.MusicPlayer = (function() {
         this.musicInfo.send('Haruna has stopped, and has cleared the queue! \<3');
         this._player.stream = undefined;
         this._player.dispatcher = undefined;
-        this._player.connection.leave();
+        this._voiceChannel.leave();
+        this._voiceChannel = undefined;
         this.musicInfo.send('Haruna will leave voice chat now \<3');
         this._player.connection = undefined;
     };
@@ -497,7 +503,6 @@ module.exports.MusicPlayer = (function() {
     MusicPlayer.prototype.clearQueue = function() {
         this._queue.songs = [];
         this._queue.index = -1;
-        this._player.dispatcher.end();
         this.musicInfo.send(`Haruna has cleared the queue!`);
     };
 
@@ -516,6 +521,7 @@ module.exports.MusicPlayer = (function() {
             volume = 0;
         }
         this._options.volume = volume;
+        this._player.dispatcher.setVolume(this._options.volume);
     };
 
     return MusicPlayer;
