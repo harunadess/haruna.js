@@ -73,12 +73,11 @@ let _musicCommando = {
         'function': function() {
             if(_args[0]) {
                 mp.addToEnd(_args[0], _author);
-                // return '';
             } else {
                 return `${_author}, if you want to add something to the queue, you must give Haruna a URL!`;
             }
         },
-        'description': 'use +queue *url*, where *url* is a valid youtube url'
+        'description': 'use +queue <url> to add to the queue'
     },
     'q': {
         'function': function() {
@@ -94,6 +93,7 @@ let _musicCommando = {
                 Promise.resolve(_joinClientToVoiceChannel()).then(() => {
                     mp.play();
                 }).catch(error => {
+					Logger.log('CMD', 'There was an error in the play command: ' + JSON.stringify(error));
                     return error;
                 });
             }
@@ -114,7 +114,7 @@ let _musicCommando = {
                 return `${_author}, Haruna must be in a voice channel first desu!`;
             }
         },
-        'description': 'pauses the current track'
+        'description': 'pauses the current song'
     },
     'pa': {
         'function': function() {
@@ -126,7 +126,7 @@ let _musicCommando = {
         'function': function() {
             mp.skip();
         },
-        'description': 'skips current track, plays next song, if one exists'
+        'description': 'skips current song, plays next song, if one exists'
     },
 
     'sk': {
@@ -140,7 +140,7 @@ let _musicCommando = {
         'function': function() {
             mp.resume();
         },
-        'description': 'resumes playing current track'
+        'description': 'resumes playing current song'
     },
 
 
@@ -188,7 +188,7 @@ let _musicCommando = {
 
     'purgequeue': {
         'function': function() {
-            mp.clearQueue();
+            mp.clearQueue('purge mf');
         },
         'description': 'removes all items after the currently playing song from the queue'
     },
@@ -212,7 +212,7 @@ let _musicCommando = {
             volume /= 100;
             mp.setVolume(volume);
         },
-        'description': 'set volume to a value between 0% and 100% (default: 20%)'
+        'description': 'set volume to a value between 0% and 100% (default: 60%)'
     }
 };
 
@@ -221,7 +221,7 @@ let _authorNotInVoiceChannel = function() {
 };
 
 let _alreadyInVoiceChannel = function() {
-    return mp.getVoiceChannel();
+    return mp.getVoiceChannel() !== undefined;
 };
 
 let _joinClientToVoiceChannel = function() {
@@ -242,7 +242,8 @@ let _clientLeaveVoiceChannel = function() {
     if(mp.getConnection()) {
         mp.getVoiceChannel().leave();
     }
-    mp.setVoiceChannel(undefined);
+	mp.setVoiceChannel(undefined);
+	_authorVoiceChannel = undefined;
 };
 
 let _generateHelpMessage = function() {
