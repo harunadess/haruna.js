@@ -14,7 +14,7 @@ node_modules
 #auth.json
 
 #Ignore files
-*.png
-*.gif
-*.txt
+#*.png
+#*.gif
+#*.txt
 test/test.js
