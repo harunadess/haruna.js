@@ -2,7 +2,6 @@
  * Created by Jorta on 25/06/2017.
  */
 const Logger = require('../logger').Logger;
-//todo:delt
 let _content;
 let _author;
 

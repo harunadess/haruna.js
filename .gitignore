@@ -15,7 +15,6 @@ auth.json
 
 #Ignore files
 *.png
-*.json
 *.gif
 *.txt
-//todo:delet
+test/test.js

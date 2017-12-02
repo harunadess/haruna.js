@@ -2,16 +2,18 @@
   "name": "haruna.js",
   "version": "1.0.0",
   "description": "discord bot built on discord.js based on haruna from Kancolle",
+  "author": "Jortathlon",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jordanjohnston/haruna.js"
+  },
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "start": "node --harmony ."
   },
-  "author": "Jortathlon",
   "license": "ISC",
   "dependencies": {
-    "discord.js": "^11.2.1",
-    "node-opus": "^0.2.7",
-    "sodium": "^2.0.1",
-    "ytdl-core": "^0.17.1"
+    "discord.js": "^11.2.1"
   }
 }

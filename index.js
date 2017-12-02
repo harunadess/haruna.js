@@ -5,7 +5,6 @@ const SubStringCommands = require('./commands/subStringCommands').SubStringComma
 const Messaging = require('./messaging').Messaging;
 const Logger = require('./logger').Logger;
 const Commands = require('./commands/commands').Commands;
-const MusicCommands = require('./commands/musicCommands').MusicCommands;
 const ConversationEngine = require('./commands/conversations');
 const Discord = require('discord.js');
 const fs = require('fs');
