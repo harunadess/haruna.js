@@ -1,4 +1,4 @@
-const Logger = require('../logger').Logger;
+const Logger = require('../util/logger').Logger;
 const HarunaID = require('../json/auth.json').harunaID;
 const AdmiralID = require('../json/auth.json').admiralID;
 

@@ -1,16 +1,16 @@
 const YT = require('ytdl-core');
-const Logger = require('../logger').Logger;
+const Logger = require('../util/logger').Logger;
 const Queue = require('./musicQueue');
 const MusicInfoService = require('./musicInfoService');
 const Admiral_Id = require('../json/auth.json').admiralID;
+const musicRoot = require('../json/paths/audio.json').musicRoot;
 
 //todo: add checks so can not play after resuming
 //todo: better error handling/notification
 
 module.exports.MusicPlayer = (function() {
     function MusicPlayer() {
-        this._queue = new Queue(); //todo: create queue obj to make the mp less polluted
-
+        this._queue = new Queue();
         this._voiceChannel = undefined;
 
 		this._states = {
@@ -41,7 +41,8 @@ module.exports.MusicPlayer = (function() {
     MusicPlayer.prototype.addToEnd = function(songToAdd, requester) {
         if(_isValidUrl(songToAdd)) {
            Promise.resolve(this._addSongToQueue(songToAdd, requester)).then(songInfo => {
-               this.musicInfo.send(songInfo);
+               Logger.log('MUSIC', 'Added song = ' + JSON.stringify(songInfo, null, '\t') + ' to the queue');
+               this.musicInfo.send(`Haruna has added \`\`${songInfo.title}\`\` to the queue!`);
            }).catch(error => {
                console.log(error);
                return `Oops, there was an error ${error}`;
@@ -64,13 +65,80 @@ module.exports.MusicPlayer = (function() {
                     url: info.video_url,
                     requester: (requester.username + '#' + requester.discriminator)
                 });
-                Logger.log('MUSIC', 'Added song = ' + JSON.stringify(this._getLastSongInQueue()) + '\nto the queue');
-				this.musicInfo.send(`Haruna has added \`\`${this._getLastSongInQueue().title}\`\` to the queue!`);
+                resolve(this._getLastSongInQueue());
             }).catch(error => {
                 Logger.log('ERROR', 'Error getting song info: ' + error);
                 reject('Error adding song to the queue :c');
             });
         });
+    };
+
+    MusicPlayer.prototype._addLocalSongToQueue = function(songToAdd, requester) {
+        return new Promise((resolve, reject) => {
+            let files = require('../json/paths/audio.json').files;
+            let song = this._findSong(files, songToAdd);
+            if(song) {
+                this._queue.songs.push({
+                    title: song.title,
+                    url: song.url,
+                    requester: (requester.username + '#' + requester.discriminator)
+                });
+                resolve(this._getLastSongInQueue());
+            } else {
+                Logger.log('ERROR', 'Error adding song to queue: song undefined');
+                reject('Error adding song to queue :c');
+            }
+        });
+    };
+
+    MusicPlayer.prototype._findSong = function(files, songToAdd) {
+        return files.find((item) => {
+            if(songToAdd.toLowerCase() === item.title.toLowerCase()) {
+                return item;
+            }
+        });
+    };
+
+    MusicPlayer.prototype.playLocalSoundClip = function(clipTitle, requester) {
+        if(clipTitle === undefined || typeof clipTitle !== 'string') {
+            return `Please give me a title of a sound clip desu!`;
+        }
+        return Promise.resolve(this._addLocalSongToQueue(clipTitle.toString(), requester)).then(songInfo => {
+            Logger.log('MUSIC', 'Added song = ' + JSON.stringify(songInfo, null, '\t') + ' to the queue');
+            this.musicInfo.send(`Haruna has added \`\`${songInfo.title}\`\` to the queue!`);
+
+            this._playLocal(songInfo);
+        }).catch(error => {
+            console.log(error);
+            this.musicInfo.send('Haruna cannot find or play the specified file. Make sure you typed it correctly desu!');
+            return `Oops, there was an error ${error}`;
+        });
+    };
+
+    MusicPlayer.prototype._playLocal = function(songInfo) {
+        let delay = 2000;
+        setTimeout(() => {
+            this._player.dispatcher = this._player.connection.playFile(musicRoot.concat(songInfo.url));   
+            this._player.dispatcher.on('end', () => {
+                Logger.log('MUSIC', 'Stream end');
+                console.log('queue:', JSON.stringify(this._queue.songs));
+                this.clearQueue();
+                this.musicInfo.send(`The queue has ended!`);
+                this._voiceChannel.leave();
+                this._voiceChannel = undefined;
+                this._player.activeState = this._states.stopped;
+                this._player.connection = undefined;
+                this.musicInfo.send('Haruna will now leave vc \<3');
+                Logger.log('MUSIC', 'active state: ' + this._getActiveState());
+            });
+            this._player.dispatcher.on('error', error => {
+                Logger.log('MUSIC', 'Stream error: ' + error);
+                this.musicInfo.send('<@'+ Admiral_Id + '>, there was an error! Check the captain\'s log \<3');
+
+                this._player.activeState = this._states.stopped;
+                Logger.log('MUSIC', 'active state: ' + this._getActiveState());
+            });
+        }, delay);
     };
 
     MusicPlayer.prototype._getLastSongInQueue = function() {
@@ -169,7 +237,6 @@ module.exports.MusicPlayer = (function() {
 	
 	MusicPlayer.prototype._getActiveState = function() {
 		let activeState = this._player.activeState;
-
 		if(activeState === this._states.playing) {
 			return 'Playing';
 		} else if(activeState === this._states.paused) {
@@ -191,7 +258,7 @@ module.exports.MusicPlayer = (function() {
     MusicPlayer.prototype._play = function() {
         this._player.dispatcher = this._player.connection.playStream(
             this._player.stream,
-            { volume: this._options.volume }
+            {volume: this._options.volume}
         );
 		Logger.log('MUSIC', 'Playing...');
 		this._player.activeState = this._states.playing;

@@ -1,5 +1,5 @@
 const _musicPlayer = require('../musicplayer/musicPlayer');
-const Logger = require('../logger').Logger;
+const Logger = require('../util/logger').Logger;
 let _args, _author, _authorVoiceChannel, _channel, _command, _content, _guild;
 let mp = new _musicPlayer.MusicPlayer();
 
@@ -10,6 +10,8 @@ module.exports.MusicCommands = {
         if(_commandExists(_command)) {
             response = _musicCommando[_command].function();
             mp.setChannel(_channel);
+        } else {
+            response = `${_author}, Haruna does not know that command desu!`;
         }
         return response;
     }
@@ -213,6 +215,27 @@ let _musicCommando = {
             mp.setVolume(volume);
         },
         'description': 'set volume to a value between 0% and 100% (default: 60%)'
+    },
+
+    'local': {
+        'function': function() {
+            let args = _args.reduce((prevItem, item) => {return prevItem.concat(' ', item);});
+            if(!_alreadyInVoiceChannel()) {
+                Promise.resolve(_joinClientToVoiceChannel()).then(() => {
+                    mp.playLocalSoundClip(args, _author).catch(error => {
+                      Logger.log(Logger.tag.error, `Haruna has an error in her music player: ${error}`);
+                    });
+                }).catch(error => {
+                    Logger.log('CMD', 'There was an error in the local command: ' + JSON.stringify(error));
+                    return error;
+                });
+            } else {
+                mp.playLocalSoundClip(args, _author).catch(error => {
+                    Logger.log(Logger.tag.error, `Haruna has an error in her music player: ${error}`);
+                  });
+            }
+        },
+        'description': 'plays a local audio clips'
     }
 };
 
@@ -269,6 +292,8 @@ let _generateHelpMessage = function() {
         + '\npurgequeue: ' + _musicCommando.purgequeue.description
         + '\n----------------------------------------------------'
         + '\nhelp: ' + _musicCommando.help.description
+        + '\n----------------------------------------------------'
+        + '\christmas: ' + _musicCommando.christmas.description
         + '\n=================================\n```';
 
     return response;

@@ -1,4 +1,4 @@
-const Messaging = require('../messaging').Messaging;
+const Messaging = require('../util/messaging').Messaging;
 
 MusicInfoService = (function() {
 	function MusicInfoService() {

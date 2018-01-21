@@ -11,6 +11,8 @@ module.exports.Commands = {
         _initialiseVariables(message);
         if(_commandExists(_command)) {
             response = _commando[_command].function();
+        } else {
+            response = `${_author}, Haruna does not know that command desu!`;
         }
         return response;
     }
@@ -202,17 +204,15 @@ let _commando = {
     },
 
     //set game command (bot owner)
-    'set_game': {
+    '_setgame': {
         'function': function() {
             let response = '';
             if(_isAdmiral()) {
                 let game = '';
-                for(let i = 0; i < _args.length; i++) {
-                    game += _args[i] + " ";
-                }
-                response = _haruna.setGameWithResponse(game);
+                game = _args.reduce((prevItem, item) => {return prevItem.concat(' ', item);});
+                _haruna.setGameWithResponse(game);
             } else {
-                response = _author + ' sorry desu, you lack the permissions to do that! <3';
+                response = _author + ', sorry desu, you lack the permissions to do that! <3';
             }
             return response;
         },
