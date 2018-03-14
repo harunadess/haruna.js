@@ -173,15 +173,10 @@ let _setGameWithResponse = function(game) {
         }
     };
 
-    let portGeneralID = require('./json/auth.json').port.general.id;
-    let portGeneralChannel = _haruna.channels.get(portGeneralID);
-
     _haruna.user.setPresence(status).then(user => {
         Logger.log(Logger.tag.info, `Set game to ${user.presence.game.name}`);
-        _respondViaChannel('Game set! <3', portGeneralChannel);
     }).catch(error => {
         Logger.log(Logger.tag.error, 'Something went wrong setting the game: ' + error + ' :c');
-        _respondViaChannel('Game not set :c', portGeneralChannel);
     });
 };
 
@@ -204,8 +199,8 @@ let _setInterval = function(type, channelToMessage) {
                     "lastMessage": channelToMessage.lastMessage.toString()
                 }
             });
-            /* _jsonLocalStorage = require('./json/localStorage.json'); */
-            _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'intervals', intervals);
+			_jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'intervals', intervals);
+			/* _jsonLocalStorage = require('./json/localStorage.json'); */
            /*  _jsonLocalStorage.intervals.hourly.push({
                 "userId": channelToMessage.id,
                 "user": {
@@ -356,6 +351,13 @@ let _isImage = function(response) {
         || response.endsWith(".gif") || response.endsWith(".jpeg");
 };
 
+let _sendGreetingMessage = function() {
+	let portGeneralID = require('./json/auth.json').port.general.id;
+	let portGeneralChannel = _haruna.channels.get(portGeneralID);
+	let greetingMessage = require('./json/conversationOptions.json').greeting;
+	_respondViaChannel(greetingMessage, portGeneralChannel);
+}
+
 
 //***********************
 //Guild join
@@ -399,7 +401,8 @@ _haruna.on('error', function(error) {
 
 //load token from auth.json
 _haruna.login(require('./json/auth.json').harunaLogin).then(() => {
-    Logger.log(Logger.tag.info, 'Login success! \<3');
+	Logger.log(Logger.tag.info, 'Login success! \<3');
+	_sendGreetingMessage();
 }).catch(error => {
     Logger.log(Logger.tag.error, `Login failed: ${error} :c`);
 });

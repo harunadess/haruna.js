@@ -217,7 +217,7 @@ let _musicCommando = {
         'description': 'set volume to a value between 0% and 100% (default: 60%)'
     },
 
-    'local': {
+    /*'local': {
         'function': function() {
             let args = _args.reduce((prevItem, item) => {return prevItem.concat(' ', item);});
             if(!_alreadyInVoiceChannel()) {
@@ -236,7 +236,7 @@ let _musicCommando = {
             }
         },
         'description': 'plays a local audio clips'
-    }
+    }*/
 };
 
 let _authorNotInVoiceChannel = function() {
