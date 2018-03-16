@@ -1,26 +1,30 @@
 /**
  * Created by Jorta on 25/06/2017.
  */
-const Logger = require('../util/logger').Logger;
-let _author, _content;
+/*
+ *For recognising substring commands that a user may type in text
+ channels of the chat.
+ */
+
+const Logger = require('./logger').Logger;
+
+let _content;
+let _author;
 
 module.exports.SubStringCommands = {
-    processMessageIfCommandExists(message) {
+    processMessageIfCommandExists: function(message) {
         _initialiseVariables(message);
         let response = '';
         if(_notFromBot()) {
             if(_isHeartCommand()) {
-                Logger.logUserMessage(message);
-                response = '<3';
+                Logger.logUserMessage(message); //fixme: not happy with repeated code, but can't be outside if-else chain
+                response = '\<3';
             } else if(_isAyyCommand()) {
                 Logger.logUserMessage(message);
                 response = 'lmao desu!';
             } else if(_isFairCommand()) {
                 Logger.logUserMessage(message);
                 response = 'fair desu';
-            } else if(_isMentioned()) {
-                Logger.logUserMessage(message);
-                response = 'Haruna is daijoubu!';
             }
         }
         return response;
@@ -37,7 +41,7 @@ let _notFromBot = function() {
 };
 
 let _isHeartCommand = function() {
-    return this._content.includes('<3') && this._author.id === require('../json/auth.json').admiralID;
+    return this._content.includes('<3') && this._author.id === require('./json/auth.json').admiralID;
 };
 
 let _isAyyCommand = function() {
@@ -48,6 +52,3 @@ let _isFairCommand = function() {
     return this._content.includes('fair') && this._author.username.includes('merk');
 };
 
-let _isMentioned = function() {
-    return this._content.toLowerCase().includes('haruna');
-};

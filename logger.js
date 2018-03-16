@@ -1,38 +1,20 @@
 /**
  * Created by Jorta on 20/06/2017.
  */
-const moment = require('moment');
 
 module.exports.Logger = {
-    tag: {
-        info: 'INFO',
-        music: 'MUSIC',
-        error: 'ERROR',
-        file: 'FILE',
-        success: 'SUCC',
-        message: {
-            text: 'MSG',
-            image: 'MSG_IMG'
-        },
-        command: 'CMD'
-    },
-
-    log(level, message) {
+    log: function(level, message) {
         _log(level, message);
     },
-    logUserMessage(message) {
+
+    logUserMessage: function(message) {
         let logMessage = _generateCommandLogMessage(message);
-        _log(this.tag.command, logMessage);
+        _log('CMD', logMessage);
     }
 };
 
-
-let _assembleLogMessage = function(level, message) {
-    return `[${_currentTime('HH:mm:ss')}][${level}] ${message}`;
-};
-
-let _currentTime = function(format) {
-    return moment().utc().format(format);
+let _assembleLogMessage = function (level, message) {
+    return '[' + level + ']' + " " + message;
 };
 
 let _generateCommandLogMessage = function(message) {
@@ -54,9 +36,5 @@ let _channelIsATextChannel = function(channelType) {
 
 let _log = function(level, message) {
     let logMessage = _assembleLogMessage(level, message);
-    if(level === 'ERROR') {
-        console.error(logMessage);
-    } else {
-        console.log(logMessage);
-    }
+    console.log(logMessage);
 };

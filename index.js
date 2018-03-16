@@ -2,24 +2,20 @@
  * Created by Jorta on 25/06/2017.
  */
 const Discord = require('discord.js');
-const fs = require('fs');
 
 const SubStringCommands = require('./commands/subStringCommands').SubStringCommands;
 const Messaging = require('./util/messaging').Messaging;
 const Logger = require('./util/logger').Logger;
 const Commands = require('./commands/commands').Commands;
 const MusicCommands = require('./commands/musicCommands').MusicCommands;
-const ConversationEngine = require('./commands/conversations');
 const LocalStorage = require('./util/localStorage');
 // const Storinator = require('./util/storinator'); //todo: implement - it, uhh, handles the really large i/o tasks maybe
+// todo: promisify storage so it's not shit. relying on async makes the code messy.
 //todo: fix intervals.
 let _haruna = new Discord.Client({autoReconnect: true});
 
 //local storage (in json)
 let _jsonLocalStorage = null;
-//conversation engine
-let _conversationEngine = null;
-let _conversationEngineActive = false;
 //string arrays of files
 module.exports.pouts = require('./json/paths/pouts.json').paths;
 module.exports.smugs = require('./json/paths/smugs.json').paths;
@@ -32,7 +28,7 @@ let _hourlyTexts = require('./json/hourly.json').texts;
 module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
     let response = '';
     channel.bulkDelete(numberOfMessages, true)
-        .then(message => {
+        .then(() => {
             Logger.log(Logger.tag.success, 'deleted 100 messages from ' + channel);
         }).catch(reason => {
         response = 'Something went wrong on my end :c';
@@ -79,8 +75,6 @@ module.exports.toggleIntervals = function(type, channelToMessage) {
             response = `Set hourly messages! Use \`\`-hourly\`\` again to disable! <3`;
         } else {
             _clearIntervals(type, channelToMessage); //store intervals or something
-            // _writeObjectToLocalStorage(_jsonLocalStorage);
-            // LocalStorage.writeJSONLocalStorage(_jsonLocalStorage);
             response = `Cleared hourly messages! Use \`\`-hourly\`\` again to enable! <3`;
         }
     } else {
@@ -90,40 +84,26 @@ module.exports.toggleIntervals = function(type, channelToMessage) {
 };
 
 let _findUserInStoredIntervals = function(type, user) {
+    console.log('_findUserInStoredIntervals');
     let JSONData = _jsonLocalStorage.getItemFromStorage('invervals');
-    let intervals = JSONData[type];
+    console.log(JSON.stringify(JSONData));
+
+    /* let intervals = JSONData[type];
+    if(intervals === undefined) {
+        return null;
+    }
     intervals.find(_user => {
         if(_isSameUser(user, _user.user)) {
             return user;
         }
     });
-    return null;
+    return null; */
 };
 
 let _isSameUser = function(user, comparisonUser) {
     return ((user.id === comparisonUser.id)
     && (user.username === comparisonUser.username)
     && (user.discriminator === comparisonUser.discriminator));
-};
-
-module.exports.setConversationEngineActive = function() {
-    _conversationEngineActive = !_conversationEngineActive;
-    if(_conversationEngineActive) {
-        return `Haruna will now chat with you! <3`;
-    } else {
-        return `Haruna will return to only responding to commands! <3`;
-    }
-};
-
-let _writeObjectToLocalStorage = function(obj) {
-    let jsonObj = JSON.stringify(obj, null, 2);
-    fs.writeFile('./json/localStorage.json', jsonObj, err => {
-        if(err) {
-            Logger.log(Logger.tag.error, 'There was an error writing to json file: ' + err);
-            return;
-        }
-        Logger.log(Logger.tag.file, 'Successfully wrote to storage! <3');
-    });
 };
 
 
@@ -139,7 +119,6 @@ _haruna.on('ready', function() {
 });
 
 let _init = function() {
-    _conversationEngine = new ConversationEngine.ConversationEngine();
     _jsonLocalStorage = new LocalStorage();
     _jsonLocalStorage.setStorage('localStorage.json');
     _setGameWithResponse();
@@ -147,7 +126,7 @@ let _init = function() {
 };
 
 let _setGameWithResponse = function(game) {
-    let info, playing, response = '';
+    let info, playing;
     if(game !== undefined) {
         playing = game;
         info = _jsonLocalStorage.getItemFromStorage('info');
@@ -173,94 +152,115 @@ let _setGameWithResponse = function(game) {
         }
     };
 
-    let portGeneralID = require('./json/auth.json').port.general.id;
-    let portGeneralChannel = _haruna.channels.get(portGeneralID);
-
     _haruna.user.setPresence(status).then(user => {
-        Logger.log(Logger.tag.info, `Set game to ${user.presence.game.name}`);
-        _respondViaChannel('Game set! <3', portGeneralChannel);
+        Logger.log(Logger.tag.info, `Set game to '${user.presence.game.name}'`);
     }).catch(error => {
         Logger.log(Logger.tag.error, 'Something went wrong setting the game: ' + error + ' :c');
-        _respondViaChannel('Game not set :c', portGeneralChannel);
+        _sendTextMessageToPortGeneral('Game not set :c');
     });
 };
 
-let _setInterval = function(type, channelToMessage) {
+/* let _setInterval = function(type, userToMessage) {
     let minute = 60000;
     let intervals;
-    _clearIntervals(type, channelToMessage);
-    intervals = _jsonLocalStorage.getItemFromStorage('intervals');
-    if(type !== undefined && channelToMessage !== undefined) {
-        if(type === 'hourly') {
-            intervals[type].push({
-                'userId': channelToMessage.id,
-                'user': {
-                    "id": channelToMessage.id,
-                    "username": channelToMessage.username,
-                    "discriminator": channelToMessage.discriminator,
-                    "avatar": channelToMessage.avatar,
-                    "bot": channelToMessage.bot,
-                    "lastMessageID": channelToMessage.lastMessageID,
-                    "lastMessage": channelToMessage.lastMessage.toString()
-                }
-            });
-            /* _jsonLocalStorage = require('./json/localStorage.json'); */
-            _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'intervals', intervals);
-           /*  _jsonLocalStorage.intervals.hourly.push({
-                "userId": channelToMessage.id,
-                "user": {
-                    "id": channelToMessage.id,
-                    "username": channelToMessage.username,
-                    "discriminator": channelToMessage.discriminator,
-                    "avatar": channelToMessage.avatar,
-                    "bot": channelToMessage.bot,
-                    "lastMessageID": channelToMessage.lastMessageID,
-                    "lastMessage": channelToMessage.lastMessage.toString()
-                }
-            });
-            _writeObjectToLocalStorage(_jsonLocalStorage); */
+    _clearIntervals(type, userToMessage).then(() => {
+        intervals = _jsonLocalStorage.getItemFromStorage('intervals');
+        if(intervals === undefined) {
+            Logger.log(Logger.tag.info, `Haruna couldn't find intervals..  Cancelling setting intervals.`);
+            return;
         }
-        Logger.log(Logger.tag.file, 'Successfully saved user\'s interval to local storage! <3');
-    } else {
-        try {
-            intervals = _jsonLocalStorage.getItemFromStorage('intervals');
-            if(intervals.length > 0) {
-                let data, user;
-                Object.keys(JSONData).map(intervalType => {
-                    data = {
-                        id: intervalType.user.id,
-                        username: intervalType.user.username,
-                        discriminator: intervalType.user.discriminator,
-                        avatar: intervalType.user.avatar,
-                        bot: intervalType.user.bot,
-                        lastMessageID: intervalType.user.lastMessageID,
-                        lastMessage: intervalType.user.lastMessage
-                    };
-                    user = new Discord.User(_haruna, data);
-                    if(user.id === undefined && user.id !== '') {
-                        Logger.log(Logger.tag.file, 'No stored interval data');
-                    } else {
-                        intervals[intervalType].push({
-                            userId: user.id, 
-                            user: user
-                        });
-                        Logger.log(Logger.tag.file, `Set intervals for user ${user.username}! <3`);
+        if(type !== undefined && userToMessage !== undefined) {
+            if(type === 'hourly') {
+                intervals[type].push({
+                    'userId': userToMessage.id,
+                    'user': {
+                        'id': userToMessage.id,
+                        'username': userToMessage.username,
+                        'discriminator': userToMessage.discriminator,
+                        'avatar': userToMessage.avatar,
+                        'bot': userToMessage.bot,
+                        'lastMessageID': userToMessage.lastMessageID,
+                        'lastMessage': userToMessage.lastMessage.toString()
                     }
                 });
-            } else {
-                Logger.log(Logger.tag.file, 'Haruna has no stored interval data');
+                _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'intervals', intervals);
             }
-        } catch(error) {
-            Logger.log(Logger.tag.error, 'Error creating data obj for interval: ' + error);
+            Logger.log(Logger.tag.file, 'Successfully saved user\'s interval to local storage! <3');
+        } else {
+            try {
+                if(intervals.length > 0) {
+                    let data, intervalSetPromises, user;
+                    intervalSetPromises = Object.keys(intervals).map(intervalType => {
+                        data = {
+                            id: intervalType.user.id,
+                            username: intervalType.user.username,
+                            discriminator: intervalType.user.discriminator,
+                            avatar: intervalType.user.avatar,
+                            bot: intervalType.user.bot,
+                            lastMessageID: intervalType.user.lastMessageID,
+                            lastMessage: intervalType.user.lastMessage
+                        };
+                        user = new Discord.User(_haruna, data);
+                        if(user.id === undefined && user.id !== '') {
+                            Logger.log(Logger.tag.file, `No stored interval data for ${user.username}`);
+                        } else {
+                            intervals[intervalType].push({
+                                userId: user.id, 
+                                user: user
+                            });
+                            Logger.log(Logger.tag.file, `Set intervals for user ${user.username}! <3`);
+                        }
+                    });
+                    Promise.all(intervalSetPromises).catch(error => {
+                        Logger.log(Logger.tag.error, `Error settings intervals: ${error}`);
+                    });
+                } else {
+                    Logger.log(Logger.tag.file, 'Haruna has no stored interval data');
+                }
+            } catch(error) {
+                Logger.log(Logger.tag.error, `Error creating data obj for interval: ${error}`);
+            }
         }
-    }
+    }).catch(error => {
+        Logger.log(Logger.tag.error, `Error clearing intervals: ${error}`);
+    });
+}; */
+
+let _setInterval = function(type, userToMessage) {
+    let intervals;
+    _clearIntervals(type, userToMessage).then(success => {
+        Logger.log(Logger.tag.info, success);
+        intervals = _jsonLocalStorage.getItemFromStorage('intervals');
+        if(intervals === undefined) {
+            Logger.log(Logger.tag.info, `Haruna couldn't find intervals in local storage. Interval not set.`);
+        } else {
+            intervals[type].push({
+                'userId': userToMessage.id,
+                'user': {
+                    'id': userToMessage.id,
+                    'username': userToMessage.username,
+                    'discriminator': userToMessage.discriminator,
+                    'avatar': userToMessage.avatar,
+                    'bot': userToMessage.bot,
+                    'lastMessageID': userToMessage.lastMessageID,
+                    'lastMessage': userToMessage.lastMessage.toString()
+                }
+            });
+            _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'intervals', intervals);
+            Logger.log(Logger.tag.success, `Saved user's interval to local storage!`);
+            _haruna.setInterval(_hourlyNotifications, 6000, userToMessage);
+            Logger.log(Logger.tag.info, `Set interval for user ${userToMessage.username}`);
+        }
+    }).catch(error => {
+        Logger.log(Logger.tag.error, `Error setting intervals: ${error}`);
+    });
 };
 
 let _hourlyNotifications = function(channelToMessage) {
     let now = new Date();
     let currentTime = {
         hour: now.getHours(),
-        minute: now.getUTCMinutes()
+        minute: now.getMinutes()
     };
 
     if(currentTime.minute === 0) {
@@ -269,30 +269,43 @@ let _hourlyNotifications = function(channelToMessage) {
     }
 };
 
-let _clearIntervals = function(type, user) {
-    let intervals = undefined, _user = undefined, it;
+/* let _clearIntervals = function(type, user) {
+    let intervals = undefined, _user = undefined;
     intervals = _jsonLocalStorage.getItemFromStorage('intervals');
+    if(intervals === undefined) {
+        Logger.log(Logger.tag.error, `Can't find stored intervals in storage..`);
+        return;
+    }
     
     let clearPromise = new Promise((succ, fail) => {
         try {
             Object.keys(intervals).map(intervalType => {
-                it = intervalType;
-                if(intervals[it].length > 0) {
-                    _user = _findUserInStoredIntervals(intervals[it], user);
-                    intervals[it] = _removeItemFromPosInArray(intervals[it], _user);
-                    Logger.log(Logger.tag.info, `Haruna has removed ${_user} from ${it} intervals <3`);
+                if(intervals[intervalType].length > 0) {
+                    _user = _findUserInStoredIntervals(intervals[intervalType], user);
+                    if(_user) {
+                        intervals[intervalType] = _removeItemFromPosInArray(intervals[intervalType], _user);
+                        Logger.log(Logger.tag.info, `Haruna has removed ${_user} from ${intervalType} intervals <3`);
+                        succ('removed user from interval');
+                    }
                 }
             });
-            succ('daijoubu!');
         } catch(error) {
             Logger.log(Logger.tag.error, `Haruna has encountered an error in _clearIntervals: ${error}`);
-            fail('shit!');
+            fail(error);
         }
     });
-    clearPromise.then(succ => {
+    return clearPromise.then(succ => {
+        Logger.log(Logger.tag.success, succ);
         _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'intervals', intervals);
     }).catch(fail => {
-        Logger.log(Logger.tag.info, `Haruna has encountered an error: ${fail}`);
+        Logger.log(Logger.tag.error, fail);
+    });
+}; */
+
+let _clearIntervals = function(type, user) {
+    return new Promise((success, fail) => {
+        success('not yet written');
+        fail(new Error('failed'));
     });
 };
 
@@ -313,9 +326,6 @@ _haruna.on('message', function(message) {
         response = MusicCommands.processMessageIfCommandExists(message);
     } else {
         response = SubStringCommands.processMessageIfCommandExists(message);
-        if(_conversationEngineActive && response === '') {
-            response = _conversationEngine.respond(message);
-        }
     }
 
     if(_hasResponseToGive(response)) {
@@ -349,6 +359,12 @@ let _respondViaChannel = function(response, channel) {
     } else {
         Messaging.sendTextMessageToChannel(response, channel);
     }
+};
+
+let _sendTextMessageToPortGeneral = function(text) {
+    let portGeneralID = require('./json/auth.json').port.general.id;
+    let portGeneralChannel = _haruna.channels.get(portGeneralID);
+    Messaging.sendTextMessageToChannel(text, portGeneralChannel);
 };
 
 let _isImage = function(response) {
@@ -399,7 +415,9 @@ _haruna.on('error', function(error) {
 
 //load token from auth.json
 _haruna.login(require('./json/auth.json').harunaLogin).then(() => {
-    Logger.log(Logger.tag.info, 'Login success! \<3');
+    Logger.log(Logger.tag.info, 'Login success! <3');
+    _sendTextMessageToPortGeneral('Fast battleship, Haruna, reporting for duty.' 
+    + ' You\'re the admiral, correct? I\'m looking forward to working with you! <3');
 }).catch(error => {
     Logger.log(Logger.tag.error, `Login failed: ${error} :c`);
 });
