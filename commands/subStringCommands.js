@@ -19,8 +19,12 @@ module.exports.SubStringCommands = {
                 Logger.logUserMessage(message);
                 response = 'fair desu';
             } else if(_isMentioned()) {
-                Logger.logUserMessage(message);
-                response = 'Haruna is daijoubu!';
+                Logger.logUserMessage(message);                
+                if(_askingMarkToPlayGames()) {
+                    response = _askMarkToPlayGames();
+                } else {
+                    response = 'Haruna is daijoubu!';
+                }
             }
         }
         return response;
@@ -28,7 +32,7 @@ module.exports.SubStringCommands = {
 };
 
 let _initialiseVariables = function(message) {
-    this._content = message.content;
+    this._content = message.content.toLowerCase();
     this._author = message.author;
 };
 
@@ -41,7 +45,7 @@ let _isHeartCommand = function() {
 };
 
 let _isAyyCommand = function() {
-    return this._content.toLowerCase().includes(' ayy') || this._content.toLowerCase() === 'ayy';
+    return this._content.includes(' ayy') || this._content === 'ayy';
 };
 
 let _isFairCommand = function() {
@@ -49,5 +53,17 @@ let _isFairCommand = function() {
 };
 
 let _isMentioned = function() {
-    return this._content.toLowerCase().includes('haruna');
+    return this._content.includes('haruna');
 };
+
+let _askingMarkToPlayGames = function() {
+    return (this._content.includes('can you') || this._content.includes('ask'))
+        && (this._content.includes('mark') || this._content.includes('merk'))
+        && (this._content.includes('games'));
+};
+
+let _askMarkToPlayGames = function() {
+    let markId = require('../json/auth.json').markID;
+    let admiralId = require('../json/auth.json').admiralID;
+    return `<@${markId}>, if you have time, do you want to play games with <@${admiralId}>?`;
+}
