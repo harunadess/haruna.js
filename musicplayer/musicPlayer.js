@@ -1,9 +1,10 @@
+'use strict';
 const YT = require('ytdl-core');
 const Logger = require('../util/logger').Logger;
 const Queue = require('./musicQueue');
 const MusicInfoService = require('./musicInfoService');
 const Admiral_Id = require('../json/auth.json').admiralID;
-const musicRoot = require('../json/paths/audio.json').musicRoot;
+// const musicRoot = require('../json/paths/audio.json').musicRoot;
 
 //todo: add checks so can not play after resuming
 //todo: better error handling/notification

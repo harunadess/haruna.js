@@ -1,6 +1,4 @@
-/**
- * Created by Jorta on 20/06/2017.
- */
+'use strict';
 const moment = require('moment');
 
 module.exports.Logger = {
@@ -28,7 +26,7 @@ module.exports.Logger = {
 
 
 let _assembleLogMessage = function(level, message) {
-    return `[${_currentTime('HH:mm:ss')}][${level}] ${message}`;
+    return `[${_currentTime('HH:mm:ss')}][${level}]--- ${message}`;
 };
 
 let _currentTime = function(format) {

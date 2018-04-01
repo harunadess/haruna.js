@@ -1,3 +1,4 @@
+'use strict';
 const _musicPlayer = require('../musicplayer/musicPlayer');
 const Logger = require('../util/logger').Logger;
 let _args, _author, _authorVoiceChannel, _channel, _command, _content;
@@ -215,9 +216,9 @@ let _musicCommando = {
         'description': 'set volume to a value between 0% and 100% (default: 60%)'
     },
 
-    'local': {
-        'function'() {
-            let args = _args.reduce((prevItem, item) => prevItem.concat(' ', item), '');
+    /*'local': {
+        'function': function() {
+            let args = _args.reduce((prevItem, item) => {return prevItem.concat(' ', item);});
             if(!_alreadyInVoiceChannel()) {
                 Promise.resolve(_joinClientToVoiceChannel()).then(() => {
                     mp.playLocalSoundClip(args, _author).catch(error => {
@@ -234,7 +235,7 @@ let _musicCommando = {
             }
         },
         'description': 'plays a local audio clips'
-    }
+    }*/
 };
 
 let _authorNotInVoiceChannel = function() {
