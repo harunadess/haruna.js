@@ -1,6 +1,7 @@
+'use strict';
 const Messaging = require('../util/messaging').Messaging;
 
-MusicInfoService = (function() {
+let MusicInfoService = (function() {
 	function MusicInfoService() {
 		this.channel = undefined;
 		this.messaging = Messaging;

@@ -1,24 +1,21 @@
-/**
- * Created by Jorta on 25/06/2017.
- */
+'use strict';
 const Discord = require('discord.js');
 const fs = require('fs');
 
-const SubStringCommands = require('./commands/subStringCommands').SubStringCommands;
+const SubStringCommands = require('./commands/subStringCommands');
 const Messaging = require('./util/messaging').Messaging;
 const Logger = require('./util/logger').Logger;
 const Commands = require('./commands/commands').Commands;
 const MusicCommands = require('./commands/musicCommands').MusicCommands;
 const ConversationEngine = require('./commands/conversations');
 const LocalStorage = require('./util/localStorage');
-// const Storinator = require('./util/storinator'); //todo: implement - it, uhh, handles the really large i/o tasks maybe
+// const Storinator = require('./util/storinator'); //todo: implement - will be the wrapper for file system
 //todo: fix intervals.
 let _haruna = new Discord.Client({autoReconnect: true});
-
-//local storage (in json)
-let _jsonLocalStorage = null;
-//conversation engine
-let _conversationEngine = null;
+//substring commands
+let _substringCommands = new SubStringCommands();
+let _conversationEngine = new ConversationEngine.ConversationEngine();
+let _jsonLocalStorage = new LocalStorage();
 let _conversationEngineActive = false;
 //string arrays of files
 module.exports.pouts = require('./json/paths/pouts.json').paths;
@@ -53,7 +50,7 @@ module.exports.shutdownGracefully = function(channel) {
 };
 
 let _sendShutdownMessage = function(channel) {
-    Messaging.sendTextMessageToChannel('Goodnight Teitoku <3', channel);
+    Messaging.sendTextMessageToChannelNoDelay('Goodnight Teitoku <3', channel);
 };
 
 module.exports.generateSelfInvite = function(channel) {
@@ -67,8 +64,8 @@ module.exports.generateSelfInvite = function(channel) {
     });
 };
 
-module.exports.setGameWithResponse = function(game) {
-    return _setGameWithResponse(game);
+module.exports.setGameWithResponse = function(type, game) {
+    return _setActivityWithResponse(type, game);
 };
 
 module.exports.toggleIntervals = function(type, channelToMessage) {
@@ -132,53 +129,76 @@ let _writeObjectToLocalStorage = function(obj) {
 //***********************
 _haruna.on('ready', function() {
     let message = `Haruna is standing by in ${_haruna.guilds.size} guilds!\n[`;
-    _haruna.guilds.map(guild => {message += `{${guild.name}}`;});
+	_haruna.guilds.map(guild => {message += `{${guild.name}},`;});
+	message = message.substring(0, (message.length-1));
     message += `]`;
     Logger.log(Logger.tag.info, message);
-    _init();
+    Promise.resolve(_init());
 });
 
 let _init = function() {
-    _conversationEngine = new ConversationEngine.ConversationEngine();
-    _jsonLocalStorage = new LocalStorage();
-    _jsonLocalStorage.setStorage('localStorage.json');
-    _setGameWithResponse();
-    _setInterval();    
+	return _jsonLocalStorage.setStorage('localStorage.json').then(() => {
+		Logger.log(Logger.tag.info, `Successfully set local storage!`);
+		return _setActivityWithResponse();
+	}).catch(error => {
+		Logger.log(Logger.tag.error, `Error setting local storage: ${error}`);
+	});
+    // _setInterval();    
 };
 
-let _setGameWithResponse = function(game) {
+let _setActivityWithResponse = function(type, game) {
     let info, playing, response = '';
     if(game !== undefined) {
         playing = game;
-        info = _jsonLocalStorage.getItemFromStorage('info');
-        info.nowPlaying = playing;
-        _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'info', info);
+        return _jsonLocalStorage.getItemFromStorage('info').then(info => {
+			info.activity.name = playing;
+			info.activity.type = type;
+			return _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'info', info).then(() => {
+				return _setActivity(type, playing);
+			});
+		});
     } else {
-        try {
-            info = _jsonLocalStorage.getItemFromStorage('info');
-            playing = info.nowPlaying;
-            Logger.log(Logger.tag.file, 'Successfully read nowPlaying from storage!');
-        } catch(error) {
-            Logger.log(Logger.tag.error, 'Error reading from storage: ' + error);
-            playing = 'Jortathlon\'s Secretary Ship <3';
-        }
-    }
-
-    let status = {
-        status: 'online',
-        afk: false,
-        game: {
-            name: playing,
-            url: 'http://kancolle.wikia.com/wiki/Haruna'
-        }
-    };
-
-    _haruna.user.setPresence(status).then(user => {
-        Logger.log(Logger.tag.info, `Set game to ${user.presence.game.name}`);
-    }).catch(error => {
-        Logger.log(Logger.tag.error, 'Something went wrong setting the game: ' + error + ' :c');
-    });
+		Logger.log(Logger.tag.info, 'No activity provided, reading from storage.');
+		return _jsonLocalStorage.getItemFromStorage('info').then(info => {
+			playing = info.activity.name;
+			type = info.activity.type;
+			Logger.log(Logger.tag.file, 'Successfully read activity from storage!');
+			return _setActivity(type, playing);
+		}).catch(error => {
+			Logger.log(Logger.tag.error, 'Error reading from storage: ' + error);
+			playing = 'Jortathlon\'s Secretary Ship <3';
+			type = 'PLAYING';
+			return _setActivity(type, playing);
+		});
+	}
 };
+
+let _setActivity = function(type, playing) {
+	let activity = {
+		name: playing,
+		options: {
+			url: 'http://kancolle.wikia.com/wiki/Haruna',
+			type: _getActivityType(type)
+		}
+	};
+	
+	return _haruna.user.setActivity(activity.name, activity.options).then(user => {
+		Logger.log(Logger.tag.info, `Set game to ${user.presence.game.name}`);
+	}).catch(error => {
+		Logger.log(Logger.tag.error, 'Something went wrong setting the activity: ' + error + ' :c');
+	});
+};
+
+let _getActivityType = function(type) {
+	if(type.toLowerCase() === 'watching') {
+		return 'WATCHING';
+	} else if(type.toLowerCase() === 'listening') {
+		return 'LISTENING';
+	} else if(type.toLowerCase() === 'streaming') {
+		return 'STREAMING';
+	}
+	return 'PLAYING';
+}
 
 let _setInterval = function(type, channelToMessage) {
     let minute = 60000;
@@ -307,18 +327,22 @@ _haruna.on('message', function(message) {
     } else if(_isMusicCommand(message.content)) {
         response = MusicCommands.processMessageIfCommandExists(message);
     } else {
-        response = SubStringCommands.processMessageIfCommandExists(message);
+        response = _substringCommands.processMessageIfCommandExists(message);
         if(_conversationEngineActive && response === '') {
             response = _conversationEngine.respond(message);
         }
     }
 
     if(_hasResponseToGive(response)) {
-        if(_thereWasNoFuckUp(response)) {
-            _respondViaChannel(response, message.channel);            
-        } else {
-            Logger.log(Logger.tag.info, `Haruna encountered something strange, a response was not a string: ${JSON.stringify(response)}`);
-        }
+		Promise.resolve(response).then(result => {
+			if(_thereWasNoFuckUp(result)) {
+				_respondViaChannel(result, message.channel);            
+			} else {
+				Logger.log(Logger.tag.info, `Haruna encountered something strange: ${JSON.stringify(result)}`);
+			}
+		}).catch(error => {
+			Logger.log(Logger.tag.error, `Haruna encountered an error: ${error}`);
+		});
     }
 });
 
@@ -379,7 +403,7 @@ _haruna.on('guildDelete', function(guild) {
 //Disconnect
 //***********************
 _haruna.on('disconnect', function(reason) {
-    Logger.log(Logger.tag.info, `Haruna has disconnected: ${reason}`);
+    Logger.log(Logger.tag.info, `Haruna has disconnected <3`);
 });
 
 
@@ -387,7 +411,7 @@ _haruna.on('disconnect', function(reason) {
 //Reconnect
 //***********************
 _haruna.on('reconnecting', function() {
-    Logger.log(Logger.tag.info, 'Haruna is reconnecting... <3');
+    Logger.log(Logger.tag.info, 'Haruna is reconnecting! <3');
 });
 
 

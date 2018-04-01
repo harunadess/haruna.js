@@ -1,3 +1,4 @@
+'use strict';
 const _musicPlayer = require('../musicplayer/musicPlayer');
 const Logger = require('../util/logger').Logger;
 let _args, _author, _authorVoiceChannel, _channel, _command, _content, _guild;

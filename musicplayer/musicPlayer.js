@@ -1,3 +1,4 @@
+'use strict';
 const YT = require('ytdl-core');
 const Logger = require('../util/logger').Logger;
 const Queue = require('./musicQueue');

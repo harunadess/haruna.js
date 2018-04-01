@@ -1,6 +1,4 @@
-/**
- * Created by Jorta on 20/06/2017.
- */
+'use strict';
 let _haruna = require('../index.js'); //for access to image stores and client methods
 let _args, _author, _channel, _command, _content, _guild;
 
@@ -208,9 +206,14 @@ let _commando = {
         'function': function() {
             let response = '';
             if(_isAdmiral()) {
-                let game = '';
-                game = _args.reduce((prevItem, item) => {return prevItem.concat(' ', item);});
-                _haruna.setGameWithResponse(game);
+				let game = '';
+				let type = _args[0];
+				_args.splice(0, 1);
+				game = _args.reduce((prevItem, item) => {
+					return prevItem.concat(' ', item);
+				});
+				console.log('game:', game, '\ttype:', type);
+				Promise.resolve(_haruna.setGameWithResponse(type, game));
             } else {
                 response = _author + ', sorry desu, you lack the permissions to do that! <3';
             }
