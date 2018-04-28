@@ -18,7 +18,7 @@ let _jsonLocalStorage = new LocalStorage();
 try {
     let _objectConstructor = new ObjectConstructor();
 } catch(error) {
-    console.log('couldnt create objectConstructor', error);
+    console.log('couldn\'t create objectConstructor', error);
 }
 let _conversationEngineActive = false;
 //string arrays of files
