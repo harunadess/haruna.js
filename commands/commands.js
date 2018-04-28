@@ -151,7 +151,7 @@ let _commando = {
     },
 
     //Sends bot to sleep after sending a message
-    'sleep': {
+    sleep: {
         function() {
             let response = '';
             if(_isAdmiral()) {
@@ -236,7 +236,7 @@ let _commando = {
 
     hourly: {
         function() {
-            return _haruna.toggleIntervals('hourly', _author);
+            return Promise.resolve(_haruna.toggleIntervals('hourly', _author));
         },
         description: 'sets/unsets hourly notifications'
     },
@@ -283,7 +283,7 @@ let _generateHelpMessage = function() {
         + '\n----------------------------------------------------'
         + '\ncomfort: ' + _commando.comfort.description
         + '\n----------------------------------------------------'
-        + '\nset_game: ' + _commando.set_game.description
+        + '\n_setgame: ' + _commando.set_game.description
         + '\n----------------------------------------------------'
         + '\navatar: ' + _commando.avatar.description
         + '\n----------------------------------------------------'

@@ -3,7 +3,7 @@ const Storinator = require('./storinator');
 const Logger = require('./logger').Logger;
 const Storage_Root = './json/storage/';
 
-const LocalStorage = function(file) {
+const LocalStorage = function() {
 	let _file = null, _jsonStorageObj = null, _storage = null;
 	const _storinator = new Storinator();
 	
@@ -24,9 +24,7 @@ const LocalStorage = function(file) {
 			_storage[property] = obj;
 			return _storinator.writeJSON((Storage_Root + _file), _storage).then(() => {
 				Logger.log(Logger.tag.info, `Haruna has saved local storage! <3`);
-				this.setStorage(file).then(() => {
-					Logger.log(Logger.tag.file, `current storage:\n${JSON.stringify(_storage, null, 0)}`);
-				});
+				this.setStorage(file);
 			}).catch(error => {
 				Logger.log(Logger.tag.error,`Haruna encountered an error while saving local storage: ${error}`);
 				throw error;
