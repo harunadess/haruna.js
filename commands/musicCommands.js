@@ -11,6 +11,9 @@ module.exports.MusicCommands = {
         if(_commandExists(_command)) {
             response = _musicCommando[_command].function();
             mp.setChannel(_channel);
+        } else if(_shortHandCommandExists(_command)) {
+            response = _shortHandCommando[_command].function();
+            mp.setChannel(_channel);
         } else {
             response = `${_author}, Haruna does not know that command desu!`;
         }
@@ -28,8 +31,13 @@ let _initialiseVariables = function(message) {
 };
 
 let _commandExists = function(command) {
+    console.log('command -->', command);
     return _musicCommando[command] !== undefined;
 };
+
+let _shortHandCommandExists = function(command) {
+    return _shortHandCommando[command] !== undefined;
+}
 
 let _musicCommando = {
     'join': {
@@ -46,11 +54,6 @@ let _musicCommando = {
         },
         'description': 'haruna joins the vc channel you are in'
     },
-    'j': {
-        'function'() {
-            //todo: intement
-        }
-    },
 
     'leave': {
         'function'() {
@@ -64,11 +67,6 @@ let _musicCommando = {
         },
         'description': 'haruna leaves vc'
     },
-    'l': {
-        'function'() {
-            //todo: intement
-        }
-    },
 
     'queue': {
         'function'() {
@@ -79,11 +77,6 @@ let _musicCommando = {
             }
         },
         'description': 'use +queue <url> to add to the queue'
-    },
-    'q': {
-        'function'() {
-            //todo: intement
-        }
     },
 
     'play': {
@@ -101,11 +94,6 @@ let _musicCommando = {
         },
         'description': 'plays the current song in the queue'
     },
-    'p': {
-        'function'() {
-            //todo: intement
-        }
-    },
 
     'pause': {
         'function'() {
@@ -117,23 +105,12 @@ let _musicCommando = {
         },
         'description': 'pauses the current song'
     },
-    'pa': {
-        'function'() {
-            //todo: intement
-        }
-    },
 
     'skip': {
         'function'() {
             mp.skip();
         },
         'description': 'skips current song, plays next song, if one exists'
-    },
-
-    'sk': {
-        'function'() {
-            //todo: intement
-        }
     },
 
 
@@ -155,23 +132,12 @@ let _musicCommando = {
         },
         'description': 'stops playing the current song and empties the queue'
     },
-    's': {
-        'function'() {
-            //todo: intement
-        }
-    },
 
     'showqueue': {
         'function'() {
             mp.getQueue();
         },
         'description': 'shows the current songs in the queue'
-    },
-
-    'sq': {
-        'function'() {
-            //todo: intement
-        }
     },
 
     'remove': {
@@ -181,22 +147,11 @@ let _musicCommando = {
         'description': 'removes the last song added to the queue'
     },
 
-    'r': {
-        'function'() {
-            //todo: intement
-        }
-    },
-
     'purgequeue': {
         'function'() {
             mp.clearQueue('purge mf');
         },
         'description': 'removes all items after the currently playing song from the queue'
-    },
-    'pq': {
-        'function'() {
-            //todo: intement
-        }
     },
 
     'help': {
@@ -213,7 +168,7 @@ let _musicCommando = {
             volume /= 100;
             mp.setVolume(volume);
         },
-        'description': 'set volume to a value between 0% and 100% (default: 60%)'
+        'description': 'set volume to a value between 0% and 100% (default: 15%)'
     },
 
     /*'local': {
@@ -237,6 +192,60 @@ let _musicCommando = {
         'description': 'plays a local audio clips'
     }*/
 };
+
+let _shortHandCommando = {
+    'j': {
+        'function': _musicCommando.join.function
+    },
+
+    'l': {
+        'function': _musicCommando.leave.function
+    },
+
+    'q': {
+        'function': _musicCommando.queue.function
+    },
+
+    'p': {
+        'function': _musicCommando.play.function
+    },
+
+    'pa': {
+        'function': _musicCommando.pause.function
+    },
+
+    'sk': {
+        'function': _musicCommando.skip.function
+    },
+
+    're': {
+        'function': _musicCommando.resume.function
+    },
+
+    's' : {
+        'function': _musicCommando.stop.function
+    },
+
+    'sq': {
+        'function': _musicCommando.showqueue.function
+    },
+
+    'r': {
+        'function': _musicCommando.remove.function
+    },
+
+    'pq': {
+        'function': _musicCommando.purgequeue.function
+    },
+
+    'h': {
+        'function': _musicCommando.help.function
+    },
+
+    'v': {
+        'function': _musicCommando.setvolume.function
+    }
+}
 
 let _authorNotInVoiceChannel = function() {
     return !_authorVoiceChannel;
@@ -269,30 +278,32 @@ let _clientLeaveVoiceChannel = function() {
 };
 
 let _generateHelpMessage = function() {
-    let response = '```md';
+    let response = '```css';
     response += '\n========= Music Help Commands ========='
         + '\nPrefix any command with "+"\n'
-        + '\njoin: ' + _musicCommando.join.description
+        + '\n[join|j]: ' + _musicCommando.join.description
         + '\n----------------------------------------------------'
-        + '\nleave: ' + _musicCommando.leave.description
+        + '\n[leave|l]: ' + _musicCommando.leave.description
         + '\n----------------------------------------------------'
-        + '\nqueue: ' + _musicCommando.queue.description
+        + '\n[queue|q]: ' + _musicCommando.queue.description
         + '\n----------------------------------------------------'
-        + '\nplay: ' + _musicCommando.play.description
+        + '\n[play|p]: ' + _musicCommando.play.description
         + '\n----------------------------------------------------'
-        + '\npause: ' + _musicCommando.pause.description
+        + '\n[pause|p]: ' + _musicCommando.pause.description
         + '\n----------------------------------------------------'
-        + '\nstop: ' + _musicCommando.stop.description
+        + '\n[resume|re]: ' + _musicCommando.resume.description
         + '\n----------------------------------------------------'
-        + '\nshowqueue: ' + _musicCommando.showqueue.description
+        + '\n[stop|s]: ' + _musicCommando.stop.description
         + '\n----------------------------------------------------'
-        + '\nremove: ' + _musicCommando.remove.description
+        + '\n[showqueue|sq]: ' + _musicCommando.showqueue.description
         + '\n----------------------------------------------------'
-        + '\npurgequeue: ' + _musicCommando.purgequeue.description
+        + '\n[remove|r]: ' + _musicCommando.remove.description
         + '\n----------------------------------------------------'
-        + '\nhelp: ' + _musicCommando.help.description
+        + '\n[purgequeue|pq]: ' + _musicCommando.purgequeue.description
         + '\n----------------------------------------------------'
-        + '\nchristmas: ' + _musicCommando.christmas.description
+        + '\n[setvolume|v]: ' + _musicCommando.setvolume.description
+        + '\n----------------------------------------------------'
+        + '\n[help|h]: ' + _musicCommando.help.description
         + '\n=================================\n```';
 
     return response;

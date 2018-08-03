@@ -29,7 +29,7 @@ module.exports.MusicPlayer = (function() {
 		};
 
         this._options = {
-            volume: 0.6
+            volume: 0.15
         };
 
         this.musicInfo = new MusicInfoService();
@@ -347,7 +347,10 @@ module.exports.MusicPlayer = (function() {
             volume = 0;
         }
         this._options.volume = volume;
-        this._player.dispatcher.setVolume(this._options.volume);
+        if(this._player.dispatcher) {
+            this._player.dispatcher.setVolume(this._options.volume);
+        }
+        this.musicInfo.send(`Haruna has set the volume to ${(volume*100)}%!`);
     };
 
     return MusicPlayer;

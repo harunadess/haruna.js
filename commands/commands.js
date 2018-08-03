@@ -250,44 +250,44 @@ let _commando = {
 };
 
 let _generateHelpMessage = function() {
-    let response = '```md';
+    let response = '```css';
     response += '\n========= Help Commands ========='
         + '\nPrefix any command with "-"\n'
-        + '\nhello: ' + _commando.hello.description
+        + '\n[hello]: ' + _commando.hello.description
         + '\n----------------------------------------------------'
-        + '\nbye: ' + _commando.bye.description
+        + '\n[bye]: ' + _commando.bye.description
         + '\n----------------------------------------------------'
-        + '\nroll: ' + _commando.roll.description
+        + '\n[roll]: ' + _commando.roll.description
         + '\n----------------------------------------------------'
-        + '\nrandom: ' + _commando.roll.description
+        + '\n[random]: ' + _commando.roll.description
         + '\n----------------------------------------------------'
-        + '\ncoin: ' + _commando.coin.description
+        + '\n[coin]: ' + _commando.coin.description
         + '\n----------------------------------------------------'
-        + '\nhelp: ' + _commando.help.description
+        + '\n[help]: ' + _commando.help.description
         + '\n----------------------------------------------------'
-        + '\npick: ' + _commando.pick.description
+        + '\n[pick]: ' + _commando.pick.description
         + '\n----------------------------------------------------'
-        + '\npurge: ' + _commando.purge.description
+        + '\n[purge]: ' + _commando.purge.description
         + '\n----------------------------------------------------'
-        + '\nidle: ' + _commando.idle.description
+        + '\n[idle]: ' + _commando.idle.description
         + '\n----------------------------------------------------'
-        + '\ninvite: ' + _commando.invite.description
+        + '\n[invite]: ' + _commando.invite.description
         + '\n----------------------------------------------------'
-        + '\npout: ' + _commando.pout.description
+        + '\n[pout]: ' + _commando.pout.description
         + '\n----------------------------------------------------'
-        + '\nselfie: ' + _commando.selfie.description
+        + '\n[selfie]: ' + _commando.selfie.description
         + '\n----------------------------------------------------'
-        + '\nsleep: ' + _commando.sleep.description
+        + '\n[sleep]: ' + _commando.sleep.description
         + '\n----------------------------------------------------'
-        + '\nsmug: ' + _commando.smug.description
+        + '\n[smug]: ' + _commando.smug.description
         + '\n----------------------------------------------------'
-        + '\ncomfort: ' + _commando.comfort.description
+        + '\n[comfort]: ' + _commando.comfort.description
         + '\n----------------------------------------------------'
-        + '\n_setgame: ' + _commando.set_game.description
+        + '\n[_setgame]: ' + _commando._setgame.description
         + '\n----------------------------------------------------'
-        + '\navatar: ' + _commando.avatar.description
+        + '\n[avatar]: ' + _commando.avatar.description
         + '\n----------------------------------------------------'
-        + '\nhourly: ' + _commando.hourly.description
+        + '\n[hourly]: ' + _commando.hourly.description
         + '\n=================================\n```';
 
     return response;
