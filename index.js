@@ -226,7 +226,8 @@ _haruna.on('message', function(message) {
     if(_isGenericCommand(message.content)) {
         response = Commands.processMessageIfCommandExists(message);
     } else if(_isMusicCommand(message.content)) {
-        response = MusicCommands.processMessageIfCommandExists(message);
+        // response = MusicCommands.processMessageIfCommandExists(message);
+        response = 'Haruna is running lite and does not have music functionality desu!';
     } else {
         response = _substringCommands.processMessageIfCommandExists(message);
         if(_conversationEngineActive && response === '') {

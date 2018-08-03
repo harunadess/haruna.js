@@ -236,14 +236,16 @@ let _commando = {
 
     hourly: {
         function() {
-            return Promise.resolve(_haruna.toggleIntervals('hourly', _author));
+            //return Promise.resolve(_haruna.toggleIntervals('hourly', _author));
+            return 'Haruna is missing this feature desu!';
         },
         description: 'sets/unsets hourly notifications'
     },
 
     chat: {
         function() {
-            return _haruna.setConversationEngineActive();
+            // return _haruna.setConversationEngineActive();
+            return 'Haruna is missing this feature desu!';
         },
         description: 'sets/unsets chatting'
     }
@@ -283,7 +285,7 @@ let _generateHelpMessage = function() {
         + '\n----------------------------------------------------'
         + '\ncomfort: ' + _commando.comfort.description
         + '\n----------------------------------------------------'
-        + '\n_setgame: ' + _commando.set_game.description
+        + '\n_setgame: ' + _commando._setgame.description
         + '\n----------------------------------------------------'
         + '\navatar: ' + _commando.avatar.description
         + '\n----------------------------------------------------'
