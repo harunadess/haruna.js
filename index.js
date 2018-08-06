@@ -22,12 +22,12 @@ try {
 }
 let _conversationEngineActive = false;
 //string arrays of files
-module.exports.pouts = require('./json/paths/pouts.json').paths;
+module.exports.pouts = require('./json/paths/pouts').paths;
 module.exports.smugs = require('./json/paths/smugs.json').paths;
 module.exports.selfies = require('./json/paths/selfies.json').paths;
 module.exports.idleTexts = require('./json/paths/idles.json').paths;
 module.exports.comfortTexts = require('./json/paths/comforts.json').paths;
-let _hourlyTexts = require('./json/hourly.json').texts;
+let _hourlyTexts = require('./json/paths/hourly.json').texts;
 
 
 module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
@@ -278,7 +278,7 @@ let _respondViaChannel = function(response, channel) {
 };
 
 let _sendTextMessageToPortGeneral = function(text) {
-    let portGeneralID = require('./json/auth.json').port.general.id;
+    let portGeneralID = require('../auth/auth').port.general.id;
     let portGeneralChannel = _haruna.channels.get(portGeneralID);
     Messaging.sendTextMessageToChannel(text, portGeneralChannel);
 };
@@ -289,11 +289,11 @@ let _isImage = function(response) {
 };
 
 let _sendGreetingMessage = function() {
-	let portGeneralID = require('./json/auth.json').port.general.id;
+	let portGeneralID = require('../auth/auth').port.general.id;
 	let portGeneralChannel = _haruna.channels.get(portGeneralID);
 	let greetingMessage = require('./json/conversationOptions.json').greeting;
 	_respondViaChannel(greetingMessage, portGeneralChannel);
-}
+};
 
 
 //***********************
@@ -337,7 +337,7 @@ _haruna.on('error', function(error) {
 
 
 //load token from auth.json
-_haruna.login(require('./json/auth.json').harunaLogin).then(() => {
+_haruna.login(require('../auth/auth').harunaLogin).then(() => {
 	Logger.log(Logger.tag.info, 'Login success! \<3');
 	_sendGreetingMessage();
 }).catch(error => {
