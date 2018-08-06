@@ -17,9 +17,8 @@ module.exports.MusicPlayer = (function() {
 		this._states = {
 			stopped: 0,
 			paused: 1,
-			playing: 2,
-			stopped: 3
-		}
+			playing: 2
+		};
 
         this._player = {
             connection: undefined,
@@ -246,7 +245,7 @@ module.exports.MusicPlayer = (function() {
 			return 'Stopped';
 		}
 		return 'Unknown';
-	}
+	};
 
     MusicPlayer.prototype._createAudioStream = function() {
         let nextSong = this._advanceQueue();
