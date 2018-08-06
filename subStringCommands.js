@@ -12,7 +12,7 @@ let _content;
 let _author;
 
 module.exports.SubStringCommands = {
-    processMessageIfCommandExists: function(message) {
+    processMessageIfCommandExists(message) {
         _initialiseVariables(message);
         let response = '';
         if(_notFromBot()) {
@@ -41,7 +41,7 @@ let _notFromBot = function() {
 };
 
 let _isHeartCommand = function() {
-    return this._content.includes('<3') && this._author.id === require('./json/auth.json').admiralID;
+    return this._content.includes('<3') && this._author.id === require('./auth.json').admiralID;
 };
 
 let _isAyyCommand = function() {

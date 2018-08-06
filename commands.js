@@ -2,12 +2,12 @@
  * Created by Jorta on 20/06/2017.
  */
 
-let _haruna = require('./index.js'); //for access to image stores and client methods
-let _content, _channel, _author, _guild, _command, _args;
+let _haruna = require('./haruna.js'); //for access to image stores TODO: find a better way?? || this may be the best way..
+let _content, _channel, _author, _guild, _guildOwner, _command, _args;
 
 
 module.exports.Commands = {
-    processMessageIfCommandExists: function(message) {
+    processMessageIfCommandExists(message) {
         let response = '';
         _initialiseVariables(message);
         if(_commandExists(_command)) {
@@ -22,19 +22,17 @@ let _initialiseVariables = function(message) {
     _channel = message.channel;
     _author = message.author;
     _guild = message.guild;
+    _guildOwner = _guild.owner;
     _args = _content.slice(1).split(' ');
     _command = _args.shift().toLowerCase();
-};
-
-let _commandExists = function(command) {
-    return _commando[command] !== undefined;
 };
 
 let _commando = {
     //help command
     'help': {
         'function': function () {
-            return _generateHelpMessage();
+            let response = _generateHelpMessage();
+            return response;
         },
         'description': 'sends this message'
     },
@@ -49,7 +47,7 @@ let _commando = {
             }
             return response;
         },
-        'description': 'sends hello to user (includes a \<3 for server owner)'
+        'description': 'sends hello to user (includes a <3 for server owner)'
     },
 
     //goodbye command
@@ -61,7 +59,7 @@ let _commando = {
             }
             return response;
         },
-        'description': 'sends a goodbye to user (includes a \<3 for server owner)'
+        'description': 'sends a goodbye to user (includes a <3 for server owner)'
     },
 
     //dice roll
@@ -86,7 +84,8 @@ let _commando = {
     'random': {
         'function': function () {
             let random = 4;
-            return _author + ` your random number is ${random} desu!`;
+            let response = _author + ` your random number is ${random} desu!`;
+            return response;
         },
         'description': 'generates a random number between 1 and 10'
     },
@@ -96,21 +95,16 @@ let _commando = {
         'function': function () {
             let random = Math.random();
             let coinSide = _headsOrTailsFromRandomNumber(random);
-            return _author + ` I choose ${coinSide} desu!`;
+            let response = _author + ` I choose ${coinSide} desu!`;
+            return response;
         },
         'description': 'flips a coin, returns heads or tails'
     },
 
-    //purge command - deletes 100 messages //TODO: look into how to delete things again
+    //purge command - deletes 100 messages
     'purge': {
         'function': function () {
-            let response = '';
-            if(_channel.type === 'text') {
-                response = _bulkDeleteFromChannel(_channel);
-            } else {
-                response = 'This command can only be used in text channel desu!';
-            }
-
+            let response = _bulkDeleteFromChannel(_channel);
             return response;
         },
         'description': 'purges 100 messages from the channel the command was used in'
@@ -119,8 +113,8 @@ let _commando = {
     //smug anime girl command
     'smug': {
         'function': function () {
-            let pos = _randomPositionInArray(_haruna.smugs.length);
-            return _haruna.smugs[pos];
+            let pathForImage = _randomElementFromArray(_haruna.smugs);
+            return pathForImage;
         },
         'description': 'sends a smug image'
     },
@@ -128,8 +122,8 @@ let _commando = {
     //pouting anime girl command :T
     'pout': {
         'function': function () {
-            let pos = _randomPositionInArray(_haruna.pouts.length);
-            return _haruna.pouts[pos];
+            let pathForImage = _randomElementFromArray(_haruna.pouts);
+            return pathForImage;
         },
         'description': 'sends a pout image'
     },
@@ -137,8 +131,8 @@ let _commando = {
     //Haruna selfie command
     'selfie': {
         'function': function () {
-            let pos = _randomPositionInArray(_haruna.selfies.length);
-           return _haruna.selfies[pos];
+            let pathForImage = _randomElementFromArray(_haruna.selfies);
+           return pathForImage;
         },
         'description': 'sends a haruna selfie'
     },
@@ -146,8 +140,8 @@ let _commando = {
     //Idling text (from Kancolle) command
     'idle': {
         'function': function () {
-            let pos = _randomPositionInArray(_haruna.idleTexts.length);
-            return _haruna.idleTexts[pos];
+            let randomIdle = _randomElementFromArray(_haruna.idleTexts);
+            return randomIdle;
         },
         'description': 'sends an idling message'
     },
@@ -160,7 +154,7 @@ let _commando = {
                 _haruna.shutdownGracefully(_channel);
             }
             else {
-                response = _author + ' sorry desu, you don\'t have permission to do that! \<3'
+                response = 'Sorry desu; you don\'t have permission to do that! \<3'
             }
             return response;
         },
@@ -179,8 +173,8 @@ let _commando = {
     //comfort command
     'comfort': {
         'function': function () {
-            let pos = _randomPositionInArray(_haruna.comfortTexts.length);
-            return _haruna.comfortTexts[pos];
+            let comfortText = _randomElementFromArray(_haruna.comfortTexts);
+            return comfortText;
         },
         'description': 'sends a comforting message'
     },
@@ -188,100 +182,59 @@ let _commando = {
     //pick command
     'pick': {
         'function': function () {
-            let response = _author;
+            let response = '';
             if (_isNotPickCommandFormat(_content)) {
-                response = ' That is not the correct format desu!';
+                response = 'That is not the correct format desu!';
                 return response;
             } else {
                 let options = _parseOptions(_content);
-                let pos = _randomPositionInArray(options.length);
-                let optionToSend = options[pos];
-                response += ` I choose ${optionToSend} desu!`;
+                let optionToSend = _randomElementFromArray(options);
+                response += `I choose ${optionToSend} desu!`;
                 return response;
             }
         },
         'description': 'picks random option from list given as -pick option_1 | option_2 | option_3'
-    },
-
-    //set game command (bot owner)
-    'set_game': {
-        'function': function() {
-            let response = '';
-            if(_isAdmiral()) {
-                let game = '';
-                for(let i = 0; i < _args.length; i++) {
-                    game += _args[i] + " ";
-                }
-                response = _haruna.setGameWithResponse(game);
-            } else {
-                response = _author + ' sorry desu, you lack the permissions to do that! <3';
-            }
-            return response;
-        },
-       'description': `sets the bot's current activity (bot owner only)`
-    },
-
-    //replies with user's avatar
-    'avatar': {
-        'function': function() {
-            let targetUser = _args[0];
-            if(targetUser === '' || !targetUser) {
-                return _author + ', ' + _author.avatarURL;
-            } else {
-                return _author + ', ' + targetUser.avatarURL;
-            }
-        },
-        'description': `replies with author's avatar`
-    },
-
-    'hourly': {
-        'function': function() {
-            return _haruna.toggleIntervals('hourly', _author); //todo: re-write legit method for this
-        },
-        'description': 'sets/unsets hourly notifications'
     }
 };
 
+let _commandExists = function(command) {
+    return _commando[command] !== null;
+};
+
 let _generateHelpMessage = function() {
-    let response = '```md';
-    response += '\n========= Help Commands ========='
-        + '\nPrefix any command with "-"\n'
-        + '\nhello: ' + _commando.hello.description
-        + '\n----------------------------------------------------'
-        + '\nbye: ' + _commando.bye.description
-        + '\n----------------------------------------------------'
-        + '\nroll: ' + _commando.roll.description
-        + '\n----------------------------------------------------'
-        + '\nrandom: ' + _commando.roll.description
-        + '\n----------------------------------------------------'
-        + '\ncoin: ' + _commando.coin.description
-        + '\n----------------------------------------------------'
-        + '\nhelp: ' + _commando.help.description
-        + '\n----------------------------------------------------'
-        + '\npick: ' + _commando.pick.description
-        + '\n----------------------------------------------------'
-        + '\npurge: ' + _commando.purge.description
-        + '\n----------------------------------------------------'
-        + '\nidle: ' + _commando.idle.description
-        + '\n----------------------------------------------------'
-        + '\ninvite: ' + _commando.invite.description
-        + '\n----------------------------------------------------'
-        + '\npout: ' + _commando.pout.description
-        + '\n----------------------------------------------------'
-        + '\nselfie: ' + _commando.selfie.description
-        + '\n----------------------------------------------------'
-        + '\nsleep: ' + _commando.sleep.description
-        + '\n----------------------------------------------------'
-        + '\nsmug: ' + _commando.smug.description
-        + '\n----------------------------------------------------'
-        + '\ncomfort: ' + _commando.comfort.description
-        + '\n----------------------------------------------------'
-        + '\nset_game: ' + _commando.set_game.description
-        + '\n----------------------------------------------------'
-        + '\navatar: ' + _commando.avatar.description
-        + '\n----------------------------------------------------'
-        + '\nhourly: ' + _commando.hourly.description
-        + '\n=================================\n```';
+    let response = '```\n';
+    response += '========= Help Commands =========\n'
+        + 'Prefix any command with "-"\n'
+        + 'hello: ' + _commando.hello.description + '\n'
+        + '----------------------------------------------------'
+        + 'bye: ' + _commando.bye.description + '\n'
+        + '----------------------------------------------------'
+        + 'roll: ' + _commando.roll.description + '\n'
+        + '----------------------------------------------------'
+        + 'random: ' + _commando.roll.description + '\n'
+        + '----------------------------------------------------'
+        + 'coin: ' + _commando.coin.description + '\n'
+        + '----------------------------------------------------'
+        + 'help: ' + _commando.help.description + '\n'
+        + '----------------------------------------------------'
+        + 'pick: ' + _commando.pick.description + '\n'
+        + '----------------------------------------------------'
+        + 'purge: ' + _commando.purge.description + '\n'
+        + '----------------------------------------------------'
+        + 'idle: ' + _commando.idle.description + '\n'
+        + '----------------------------------------------------'
+        + 'invite: ' + _commando.invite.description + '\n'
+        + '----------------------------------------------------'
+        + 'pout: ' + _commando.pout.description + '\n'
+        + '----------------------------------------------------'
+        + 'selfie: ' + _commando.selfie.description + '\n'
+        + '----------------------------------------------------'
+        + 'sleep: ' + _commando.sleep.description + '\n'
+        + '----------------------------------------------------'
+        + 'smug: ' + _commando.smug.description + '\n'
+        + '----------------------------------------------------'
+        + 'comfort: ' + _commando.comfort.description + '\n'
+        + '=================================\n```'
 
     return response;
 };
@@ -302,17 +255,17 @@ let _headsOrTailsFromRandomNumber = function(random) {
     return (random === 0 ? 'heads' : 'tails');
 };
 
-let _randomPositionInArray = function(upperBound) {
-    let pos = Math.floor(Math.random()*upperBound);
-    return pos;
+let _randomElementFromArray = function(array) {
+    let pos = Math.floor(Math.random()*array.length);
+    return array[pos];
 };
 
 let _bulkDeleteFromChannel = function() {
-    return _haruna.deleteMessagesFromChannel(50, _channel);
+    return _haruna.deleteMessagesFromChannel(100, _channel);
 };
 
 let _isAdmiral = function() {
-    return _author.id === require('./json/auth.json').admiralID;
+    return _author.id === require('./auth.json').admiralID;
 };
 
 let _isNotPickCommandFormat = function() {
@@ -321,7 +274,7 @@ let _isNotPickCommandFormat = function() {
 
 let _parseOptions = function(message) {
     let options = message.slice(5).split('|');
-    for(let i = 0; i < options.length; i++) {
+    for(var i = 0; i < options.length; i++) {
         options[i] = options[i].trim();
     }
     return options;
