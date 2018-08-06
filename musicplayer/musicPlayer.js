@@ -3,7 +3,7 @@ const YT = require('ytdl-core');
 const Logger = require('../util/logger').Logger;
 const Queue = require('./musicQueue');
 const MusicInfoService = require('./musicInfoService');
-const Admiral_Id = require('../json/auth.json').admiralID;
+const Admiral_Id = require('../../auth/auth').admiralID;
 // const musicRoot = require('../json/paths/audio.json').musicRoot;
 
 //todo: add checks so can not play after resuming
