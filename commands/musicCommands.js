@@ -293,8 +293,6 @@ let _generateHelpMessage = function() {
         + '\npurgequeue: ' + _musicCommando.purgequeue.description
         + '\n----------------------------------------------------'
         + '\nhelp: ' + _musicCommando.help.description
-        + '\n----------------------------------------------------'
-        + '\christmas: ' + _musicCommando.christmas.description
         + '\n=================================\n```';
 
     return response;

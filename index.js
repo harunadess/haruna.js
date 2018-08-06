@@ -123,6 +123,12 @@ let _writeObjectToLocalStorage = function(obj) {
     });
 };
 
+module.exports.findUser = function(nickname) {
+	let matchingUsers = _haruna.guilds.map(guild => {
+		return guild.members.find(user => {return user.nickname === nickname;});
+	});
+	return matchingUsers.find(user => {return (user !== null);});
+};
 
 //***********************
 //Bot start up

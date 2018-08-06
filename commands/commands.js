@@ -225,11 +225,12 @@ let _commando = {
     //replies with user's avatar
     'avatar': {
         'function': function() {
-            let targetUser = _args[0];
+			let targetUser = _args[0].substr(1);
             if(targetUser === '' || !targetUser) {
                 return _author + ', ' + _author.avatarURL;
             } else {
-                return _author + ', ' + targetUser.avatarURL;
+				targetUser = _haruna.findUser(targetUser);
+                return _author + ', ' + targetUser.user.avatarURL;
             }
         },
         'description': `replies with author's avatar`
@@ -244,7 +245,8 @@ let _commando = {
 
     'chat': {
         'function': function() {
-            return _haruna.setConversationEngineActive();
+			//return _haruna.setConversationEngineActive();
+			return 'This is not implemented, desu!';
         },
         'description': 'sets/unsets chatting'
     }
@@ -284,7 +286,7 @@ let _generateHelpMessage = function() {
         + '\n----------------------------------------------------'
         + '\ncomfort: ' + _commando.comfort.description
         + '\n----------------------------------------------------'
-        + '\nset_game: ' + _commando.set_game.description
+        + '\nset_game: ' + _commando._setgame.description
         + '\n----------------------------------------------------'
         + '\navatar: ' + _commando.avatar.description
         + '\n----------------------------------------------------'
