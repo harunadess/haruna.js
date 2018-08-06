@@ -28,13 +28,13 @@ const SubStringCommands = function() {
 			}
         }
         return response;
-	}
+	};
 	
 	SubStringCommands.prototype._initialiseVariables = function(message) {
 		this._content = message.content.toLowerCase();
 		this._author = message.author;
-		this._AdmiralId = require('../json/auth.json').admiralID
-		this._MarkId = require('../json/auth.json').markID;
+		this._AdmiralId = require('../../auth/auth').admiralID
+		this._MarkId = require('../../auth/auth').markID;
 	};
 	
 	SubStringCommands.prototype._notFromBot = function() {
@@ -47,7 +47,7 @@ const SubStringCommands = function() {
 	
 	SubStringCommands.prototype._isAdmiral = function() {
 		return this._author.id === this._AdmiralId;
-	}
+	};
 	
 	SubStringCommands.prototype._isAyyCommand = function() {
 		return this._content.includes(' ayy') || this._content === 'ayy';
