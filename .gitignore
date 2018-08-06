@@ -1,15 +1,23 @@
-#compiled binary add-ons
+# compiled binary add-ons
 build/Release
 
-#.npm
+# .npm
 .npm
 
-#dependency directories
+# dependency directories
 node_modules
 
 
-#git shit
+# git shit
 .idea/
 
-# Configs
-auth.json
+# configs
+/json
+
+# images
+*.png
+*.jpg
+*.gif
+
+# image configs
+*.txt
