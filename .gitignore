@@ -19,5 +19,5 @@ node_modules
 *.jpg
 *.gif
 
-# image configs
+# misc files
 *.txt 
