@@ -1,0 +1,11 @@
+{
+  "paths": [
+    "./images/smugs/smug1.png", "./images/smugs/smug2.png",
+    "./images/smugs/smug3.png", "./images/smugs/smug4.png",
+    "./images/smugs/smug5.png", "./images/smugs/smug6.png",
+    "./images/smugs/smug7.png", "./images/smugs/smug8.png",
+    "./images/smugs/smug9.png", "./images/smugs/smug10.png",
+    "./images/smugs/smug11.png", "./images/smugs/smug12.png",
+    "./images/smugs/smug13.png"
+  ]
+}
