@@ -1,16 +1,17 @@
-'use strict';
-let _haruna = require('../index.js'); //for access to image stores and client methods
-let _args, _author, _channel, _command, _content;
+/**
+ * Created by Jorta on 20/06/2017.
+ */
+
+let _haruna = require('./index.js'); //for access to image stores and client methods
+let _content, _channel, _author, _guild, _command, _args;
 
 
 module.exports.Commands = {
-    processMessageIfCommandExists(message) {
+    processMessageIfCommandExists: function(message) {
         let response = '';
         _initialiseVariables(message);
         if(_commandExists(_command)) {
             response = _commando[_command].function();
-        } else {
-            response = `${_author}, Haruna does not know that command desu!`;
         }
         return response;
     }
@@ -20,6 +21,7 @@ let _initialiseVariables = function(message) {
     _content = message.cleanContent;
     _channel = message.channel;
     _author = message.author;
+    _guild = message.guild;
     _args = _content.slice(1).split(' ');
     _command = _args.shift().toLowerCase();
 };
@@ -30,44 +32,44 @@ let _commandExists = function(command) {
 
 let _commando = {
     //help command
-    help: {
-        function() {
+    'help': {
+        'function': function () {
             return _generateHelpMessage();
         },
-        description: 'sends this message'
+        'description': 'sends this message'
     },
 
     //hello command
-    hello: {
-        function() {
+    'hello': {
+        'function': function () {
             let response = _generateGreetingMessage('Hello');
 
-            if(_isAdmiral()) {
-                response += ' <3';
+            if (_isAdmiral()) {
+                response += ' \<3';
             }
             return response;
         },
-        description: 'sends hello to user (includes a <3 for server owner)'
+        'description': 'sends hello to user (includes a \<3 for server owner)'
     },
 
     //goodbye command
-    bye: {
-        function() {
+    'bye': {
+        'function': function () {
             let response = _generateGreetingMessage('Goodbye');
-            if(_isAdmiral()) {
-                response += ' <3';
+            if (_isAdmiral()) {
+                response += ' \<3';
             }
             return response;
         },
-        description: 'sends a goodbye to user (includes a <3 for server owner)'
+        'description': 'sends a goodbye to user (includes a \<3 for server owner)'
     },
 
     //dice roll
-    roll: {
-        function() {
-            let response, roll;
-            if(_isNumber(parseInt(_args[0], 10))) {
-                roll = _randomWholeNumber(parseInt(_args[0], 10));
+    'roll': {
+        'function': function () {
+            let roll, response;
+            if(_isNumber(parseInt(_args[0]))) {
+                roll = _randomWholeNumber(parseInt(_args[0]));
             } else if(_args.length < 1) {
                 roll = _randomWholeNumber(6);
             } else {
@@ -77,31 +79,31 @@ let _commando = {
             response = _author + ` you rolled a ${roll} desu!`;
             return response;
         },
-        description: 'rolls a user specified die (default of 6 sides if no arguments specified)'
+        'description': 'rolls a user specified die (default of 6 sides if no arguments specified)'
     },
 
     //random number
-    random: {
-        function() {
+    'random': {
+        'function': function () {
             let random = 4;
             return _author + ` your random number is ${random} desu!`;
         },
-        description: 'generates a random number between 1 and 10'
+        'description': 'generates a random number between 1 and 10'
     },
 
     //flip coin
-    coin: {
-        function() {
+    'coin': {
+        'function': function () {
             let random = Math.random();
             let coinSide = _headsOrTailsFromRandomNumber(random);
             return _author + ` I choose ${coinSide} desu!`;
         },
-        description: 'flips a coin, returns heads or tails'
+        'description': 'flips a coin, returns heads or tails'
     },
 
     //purge command - deletes 100 messages //TODO: look into how to delete things again
-    purge: {
-        function() {
+    'purge': {
+        'function': function () {
             let response = '';
             if(_channel.type === 'text') {
                 response = _bulkDeleteFromChannel(_channel);
@@ -111,82 +113,83 @@ let _commando = {
 
             return response;
         },
-        description: 'purges 100 messages from the channel the command was used in'
+        'description': 'purges 100 messages from the channel the command was used in'
     },
 
     //smug anime girl command
-    smug: {
-        function() {
+    'smug': {
+        'function': function () {
             let pos = _randomPositionInArray(_haruna.smugs.length);
             return _haruna.smugs[pos];
         },
-        description: 'sends a smug image'
+        'description': 'sends a smug image'
     },
 
     //pouting anime girl command :T
-    pout: {
-        function() {
+    'pout': {
+        'function': function () {
             let pos = _randomPositionInArray(_haruna.pouts.length);
             return _haruna.pouts[pos];
         },
-        description: 'sends a pout image'
+        'description': 'sends a pout image'
     },
 
     //Haruna selfie command
-    selfie: {
-        function() {
+    'selfie': {
+        'function': function () {
             let pos = _randomPositionInArray(_haruna.selfies.length);
-            return _haruna.selfies[pos];
+           return _haruna.selfies[pos];
         },
-        description: 'sends a haruna selfie'
+        'description': 'sends a haruna selfie'
     },
 
     //Idling text (from Kancolle) command
-    idle: {
-        function() {
+    'idle': {
+        'function': function () {
             let pos = _randomPositionInArray(_haruna.idleTexts.length);
             return _haruna.idleTexts[pos];
         },
-        description: 'sends an idling message'
+        'description': 'sends an idling message'
     },
 
     //Sends bot to sleep after sending a message
-    sleep: {
-        function() {
+    'sleep': {
+        'function': function () {
             let response = '';
             if(_isAdmiral()) {
                 _haruna.shutdownGracefully(_channel);
-            } else {
-                response = _author + ' sorry desu, you don\'t have permission to do that! <3';
+            }
+            else {
+                response = _author + ' sorry desu, you don\'t have permission to do that! \<3'
             }
             return response;
         },
-        description: 'Bot Owner Commands: sends bot offline'
+        'description': 'Bot Owner Commands: sends bot offline'
     },
 
     //generate invite command
-    invite: {
-        function() {
+    'invite': {
+        'function': function () {
             _haruna.generateSelfInvite(_channel);
             return '';
         },
-        description: 'sends an invite link'
+        'description': 'sends an invite link'
     },
 
     //comfort command
-    comfort: {
-        function() {
+    'comfort': {
+        'function': function () {
             let pos = _randomPositionInArray(_haruna.comfortTexts.length);
             return _haruna.comfortTexts[pos];
         },
-        description: 'sends a comforting message'
+        'description': 'sends a comforting message'
     },
 
     //pick command
-    pick: {
-        function() {
+    'pick': {
+        'function': function () {
             let response = _author;
-            if(_isNotPickCommandFormat(_content)) {
+            if (_isNotPickCommandFormat(_content)) {
                 response = ' That is not the correct format desu!';
                 return response;
             } else {
@@ -197,57 +200,45 @@ let _commando = {
                 return response;
             }
         },
-        description: 'picks random option from list given as -pick option_1 | option_2 | option_3'
+        'description': 'picks random option from list given as -pick option_1 | option_2 | option_3'
     },
 
     //set game command (bot owner)
-    _setgame: {
-        function() {
+    'set_game': {
+        'function': function() {
             let response = '';
             if(_isAdmiral()) {
-				let game = '';
-				let type = _args[0];
-				_args.splice(0, 1);
-				game = _args.reduce((prevItem, item) => {
-					return prevItem.concat(' ', item);
-				});
-				console.log('game:', game, '\ttype:', type);
-				Promise.resolve(_haruna.setGameWithResponse(type, game));
+                let game = '';
+                for(let i = 0; i < _args.length; i++) {
+                    game += _args[i] + " ";
+                }
+                response = _haruna.setGameWithResponse(game);
             } else {
-                response = _author + ', sorry desu, you lack the permissions to do that! <3';
+                response = _author + ' sorry desu, you lack the permissions to do that! <3';
             }
             return response;
         },
-        description: `sets the bot's current activity (bot owner only)`
+       'description': `sets the bot's current activity (bot owner only)`
     },
 
     //replies with user's avatar
     'avatar': {
         'function': function() {
-			let targetUser = _args[0].substr(1);
+            let targetUser = _args[0];
             if(targetUser === '' || !targetUser) {
                 return _author + ', ' + _author.avatarURL;
             } else {
-				targetUser = _haruna.findUser(targetUser);
-                return _author + ', ' + targetUser.user.avatarURL;
+                return _author + ', ' + targetUser.avatarURL;
             }
         },
-        description: `replies with author's avatar`
+        'description': `replies with author's avatar`
     },
 
-    hourly: {
-        function() {
-            return Promise.resolve(_haruna.toggleIntervals('hourly', _author));
-        },
-        description: 'sets/unsets hourly notifications'
-    },
-
-    'chat': {
+    'hourly': {
         'function': function() {
-			//return _haruna.setConversationEngineActive();
-			return 'This is not implemented, desu!';
+            return _haruna.toggleIntervals('hourly', _author); //todo: re-write legit method for this
         },
-        description: 'sets/unsets chatting'
+        'description': 'sets/unsets hourly notifications'
     }
 };
 
@@ -285,7 +276,7 @@ let _generateHelpMessage = function() {
         + '\n----------------------------------------------------'
         + '\ncomfort: ' + _commando.comfort.description
         + '\n----------------------------------------------------'
-        + '\nset_game: ' + _commando._setgame.description
+        + '\nset_game: ' + _commando.set_game.description
         + '\n----------------------------------------------------'
         + '\navatar: ' + _commando.avatar.description
         + '\n----------------------------------------------------'
@@ -300,7 +291,7 @@ let _generateGreetingMessage = function(messageType) {
 };
 
 let _isNumber = function(value) {
-    return !isNaN(value);
+  return !isNaN(value);
 };
 
 let _randomWholeNumber = function(num) {
@@ -321,7 +312,7 @@ let _bulkDeleteFromChannel = function() {
 };
 
 let _isAdmiral = function() {
-    return _author.id === require('../json/auth.json').admiralID;
+    return _author.id === require('./json/auth.json').admiralID;
 };
 
 let _isNotPickCommandFormat = function() {

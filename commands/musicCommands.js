@@ -1,11 +1,11 @@
 'use strict';
 const _musicPlayer = require('../musicplayer/musicPlayer');
 const Logger = require('../util/logger').Logger;
-let _args, _author, _authorVoiceChannel, _channel, _command, _content, _guild;
+let _args, _author, _authorVoiceChannel, _channel, _command, _content;
 let mp = new _musicPlayer.MusicPlayer();
 
 module.exports.MusicCommands = {
-    processMessageIfCommandExists: function(message) {
+    processMessageIfCommandExists(message) {
         let response = '';
         _initialiseVariables(message);
         if(_commandExists(_command)) {
@@ -23,7 +23,6 @@ let _initialiseVariables = function(message) {
     _channel = message.channel;
     _authorVoiceChannel = message.member.voiceChannel;
     _author = message.author;
-    _guild = message.guild;
     _args = _content.slice(1).split(' ');
     _command = _args.shift().toLowerCase();
 };
@@ -34,7 +33,7 @@ let _commandExists = function(command) {
 
 let _musicCommando = {
     'join': {
-        'function': function() {
+        'function'() {
             if(_authorNotInVoiceChannel()) {
                 return `You must be in a voice channel first desu!`;
             }
@@ -48,14 +47,13 @@ let _musicCommando = {
         'description': 'haruna joins the vc channel you are in'
     },
     'j': {
-        'function': function() {
+        'function'() {
             //todo: intement
-
         }
     },
 
     'leave': {
-        'function': function() {
+        'function'() {
             let voiceChannel = mp.getVoiceChannel();
             if(voiceChannel !== undefined) {
                 _clientLeaveVoiceChannel();
@@ -67,13 +65,13 @@ let _musicCommando = {
         'description': 'haruna leaves vc'
     },
     'l': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'queue': {
-        'function': function() {
+        'function'() {
             if(_args[0]) {
                 mp.addToEnd(_args[0], _author);
             } else {
@@ -83,20 +81,20 @@ let _musicCommando = {
         'description': 'use +queue <url> to add to the queue'
     },
     'q': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'play': {
-        'function': function() {
+        'function'() {
             if(_alreadyInVoiceChannel()) {
                 mp.play();
             } else {
                 Promise.resolve(_joinClientToVoiceChannel()).then(() => {
                     mp.play();
                 }).catch(error => {
-					Logger.log('CMD', 'There was an error in the play command: ' + JSON.stringify(error));
+                    Logger.log('CMD', 'There was an error in the play command: ' + JSON.stringify(error));
                     return error;
                 });
             }
@@ -104,13 +102,13 @@ let _musicCommando = {
         'description': 'plays the current song in the queue'
     },
     'p': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'pause': {
-        'function': function() {
+        'function'() {
             if(_alreadyInVoiceChannel()) {
                 mp.pause();
             } else {
@@ -120,27 +118,27 @@ let _musicCommando = {
         'description': 'pauses the current song'
     },
     'pa': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'skip': {
-        'function': function() {
+        'function'() {
             mp.skip();
         },
         'description': 'skips current song, plays next song, if one exists'
     },
 
     'sk': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
 
     'resume': {
-        'function': function() {
+        'function'() {
             mp.resume();
         },
         'description': 'resumes playing current song'
@@ -148,7 +146,7 @@ let _musicCommando = {
 
 
     'stop': {
-        'function': function() {
+        'function'() {
             if(_alreadyInVoiceChannel()) {
                 mp.stop();
             } else {
@@ -158,51 +156,51 @@ let _musicCommando = {
         'description': 'stops playing the current song and empties the queue'
     },
     's': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'showqueue': {
-        'function': function() {
+        'function'() {
             mp.getQueue();
         },
         'description': 'shows the current songs in the queue'
     },
 
     'sq': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'remove': {
-        'function': function() {
+        'function'() {
             mp.removeSongFromEnd();
         },
         'description': 'removes the last song added to the queue'
     },
 
     'r': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'purgequeue': {
-        'function': function() {
+        'function'() {
             mp.clearQueue('purge mf');
         },
         'description': 'removes all items after the currently playing song from the queue'
     },
     'pq': {
-        'function': function() {
+        'function'() {
             //todo: intement
         }
     },
 
     'help': {
-        'function': function() {
+        'function'() {
             let response = _generateHelpMessage();
             return response;
         },
@@ -210,7 +208,7 @@ let _musicCommando = {
     },
 
     'setvolume': {
-        'function': function() {
+        'function'() {
             let volume = _args[0];
             volume /= 100;
             mp.setVolume(volume);
@@ -266,8 +264,8 @@ let _clientLeaveVoiceChannel = function() {
     if(mp.getConnection()) {
         mp.getVoiceChannel().leave();
     }
-	mp.setVoiceChannel(undefined);
-	_authorVoiceChannel = undefined;
+    mp.setVoiceChannel(undefined);
+    _authorVoiceChannel = undefined;
 };
 
 let _generateHelpMessage = function() {

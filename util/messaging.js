@@ -23,7 +23,7 @@ module.exports.Messaging = {
 		});
 	},
 
-    sendImageToChannel: function(imagePath, channel) {
+    sendImageToChannel(imagePath, channel) {
         channel.send('', {file: imagePath}).then(message => {
             Logger.log(Logger.tag.message.image, `Sent message: ${message.attachments.first().filename}`);
         }).catch(error => {
