@@ -22,12 +22,12 @@ try {
 }
 let _conversationEngineActive = false;
 //string arrays of files
-module.exports.pouts = require('./json/paths/pouts').paths;
-module.exports.smugs = require('./json/paths/smugs.json').paths;
-module.exports.selfies = require('./json/paths/selfies.json').paths;
-module.exports.idleTexts = require('./json/paths/idles.json').paths;
-module.exports.comfortTexts = require('./json/paths/comforts.json').paths;
-let _hourlyTexts = require('./json/paths/hourly.json').texts;
+module.exports.pouts = require('./paths/pouts').paths;
+module.exports.smugs = require('./paths/smugs.json').paths;
+module.exports.selfies = require('./paths/selfies.json').paths;
+module.exports.idleTexts = require('./paths/idles.json').paths;
+module.exports.comfortTexts = require('./paths/comforts.json').paths;
+let _hourlyTexts = require('./paths/hourly.json').texts;
 
 
 module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
