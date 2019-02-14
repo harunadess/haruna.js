@@ -1,7 +1,8 @@
 'use strict';
-let _haruna = require('../index.js'); //for access to image stores and client methods
+const _haruna = require('../index.js'); //for access to image stores and client methods
+const _booruSearch = require('../commands/booru');
+const _booru = new _booruSearch();
 let _args, _author, _channel, _command, _content;
-
 
 module.exports.Commands = {
     processMessageIfCommandExists(message) {
@@ -17,10 +18,18 @@ module.exports.Commands = {
 };
 
 let _initialiseVariables = function(message) {
-    _content = message.cleanContent;
+	_content = message.cleanContent;
     _channel = message.channel;
     _author = message.author;
-    _args = _content.slice(1).split(' ');
+	//_args = _content.slice(1).split(' ');
+	_args = _content.slice(7).split(' ');
+
+	//todo: fix args
+	_args = _args.filter((arg) => {
+		if(arg.length >= 1)
+			return arg;
+	});
+	console.log('args: ', _args);
     _command = _args.shift().toLowerCase();
 };
 
@@ -30,7 +39,7 @@ let _commandExists = function(command) {
 
 let _commando = {
     //help command
-    help: {
+    'help': {
         function() {
             return _generateHelpMessage();
         },
@@ -38,7 +47,7 @@ let _commando = {
     },
 
     //hello command
-    hello: {
+    'hello': {
         function() {
             let response = _generateGreetingMessage('Hello');
 
@@ -51,7 +60,7 @@ let _commando = {
     },
 
     //goodbye command
-    bye: {
+    'bye': {
         function() {
             let response = _generateGreetingMessage('Goodbye');
             if(_isAdmiral()) {
@@ -63,7 +72,7 @@ let _commando = {
     },
 
     //dice roll
-    roll: {
+    'roll': {
         function() {
             let response, roll;
             if(_isNumber(parseInt(_args[0], 10))) {
@@ -81,7 +90,7 @@ let _commando = {
     },
 
     //random number
-    random: {
+    'random': {
         function() {
             let random = 4;
             return _author + ` your random number is ${random} desu!`;
@@ -90,17 +99,33 @@ let _commando = {
     },
 
     //flip coin
-    coin: {
+    'coin': {
         function() {
             let random = Math.random();
             let coinSide = _headsOrTailsFromRandomNumber(random);
             return _author + ` I choose ${coinSide} desu!`;
         },
         description: 'flips a coin, returns heads or tails'
-    },
+	},
+	
+	//8ball
+	'8ball': {
+		function() {
+			if(!_args[0]) {
+				return `${_author}, please ask Haruna a question, desu!`;
+			}
+			let question = _args.join(' ');
+			if(!question.includes('?')) {
+				return `${_author}, Haruna cannot answer a statement, desu!`;
+			}
+            let pos = _randomPositionInArray(_haruna.magic8BallResponses.length);
+            return `${_author}, ${_haruna.magic8BallResponses[pos]}`;
+        },
+        description: 'magic 8 ball'
+	},
 
     //purge command - deletes 100 messages //TODO: look into how to delete things again
-    purge: {
+    'purge': {
         function() {
             let response = '';
             if(_channel.type === 'text') {
@@ -115,7 +140,7 @@ let _commando = {
     },
 
     //smug anime girl command
-    smug: {
+    'smug': {
         function() {
             let pos = _randomPositionInArray(_haruna.smugs.length);
             return _haruna.smugs[pos];
@@ -124,7 +149,7 @@ let _commando = {
     },
 
     //pouting anime girl command :T
-    pout: {
+    'pout': {
         function() {
             let pos = _randomPositionInArray(_haruna.pouts.length);
             return _haruna.pouts[pos];
@@ -133,7 +158,7 @@ let _commando = {
     },
 
     //Haruna selfie command
-    selfie: {
+    'selfie': {
         function() {
             let pos = _randomPositionInArray(_haruna.selfies.length);
             return _haruna.selfies[pos];
@@ -142,7 +167,7 @@ let _commando = {
     },
 
     //Idling text (from Kancolle) command
-    idle: {
+    'idle': {
         function() {
             let pos = _randomPositionInArray(_haruna.idleTexts.length);
             return _haruna.idleTexts[pos];
@@ -151,7 +176,7 @@ let _commando = {
     },
 
     //Sends bot to sleep after sending a message
-    sleep: {
+    'sleep': {
         function() {
             let response = '';
             if(_isAdmiral()) {
@@ -165,7 +190,7 @@ let _commando = {
     },
 
     //generate invite command
-    invite: {
+    'invite': {
         function() {
             _haruna.generateSelfInvite(_channel);
             return '';
@@ -174,7 +199,7 @@ let _commando = {
     },
 
     //comfort command
-    comfort: {
+    'comfort': {
         function() {
             let pos = _randomPositionInArray(_haruna.comfortTexts.length);
             return _haruna.comfortTexts[pos];
@@ -183,7 +208,7 @@ let _commando = {
     },
 
     //pick command
-    pick: {
+    'pick': {
         function() {
             let response = _author;
             if(_isNotPickCommandFormat(_content)) {
@@ -198,10 +223,18 @@ let _commando = {
             }
         },
         description: 'picks random option from list given as -pick option_1 | option_2 | option_3'
-    },
+	},
+	
+	//search booru command
+	'search' : {
+		function() {
+			return Promise.resolve(_booru.search(_content));
+		},
+		description: 'search *booru for image with specified tags'
+	},
 
     //set game command (bot owner)
-    _setgame: {
+    '_setgame': {
         function() {
             let response = '';
             if(_isAdmiral()) {
@@ -224,18 +257,20 @@ let _commando = {
     //replies with user's avatar
     'avatar': {
         'function': function() {
-			let targetUser = _args[0].substr(1);
+			let targetUser = _args[0].trim().substr(1);
             if(targetUser === '' || !targetUser) {
                 return _author + ', ' + _author.avatarURL;
             } else {
+				console.log(targetUser);
 				targetUser = _haruna.findUser(targetUser);
+				console.log(JSON.stringify(targetUser, null, 1));
                 return _author + ', ' + targetUser.user.avatarURL;
             }
         },
         description: `replies with author's avatar`
     },
 
-    hourly: {
+    'hourly': {
         function() {
             return Promise.resolve(_haruna.toggleIntervals('hourly', _author));
         },
@@ -252,47 +287,15 @@ let _commando = {
 };
 
 let _generateHelpMessage = function() {
-    let response = '```md';
-    response += '\n========= Help Commands ========='
-        + '\nPrefix any command with "-"\n'
-        + '\nhello: ' + _commando.hello.description
-        + '\n----------------------------------------------------'
-        + '\nbye: ' + _commando.bye.description
-        + '\n----------------------------------------------------'
-        + '\nroll: ' + _commando.roll.description
-        + '\n----------------------------------------------------'
-        + '\nrandom: ' + _commando.roll.description
-        + '\n----------------------------------------------------'
-        + '\ncoin: ' + _commando.coin.description
-        + '\n----------------------------------------------------'
-        + '\nhelp: ' + _commando.help.description
-        + '\n----------------------------------------------------'
-        + '\npick: ' + _commando.pick.description
-        + '\n----------------------------------------------------'
-        + '\npurge: ' + _commando.purge.description
-        + '\n----------------------------------------------------'
-        + '\nidle: ' + _commando.idle.description
-        + '\n----------------------------------------------------'
-        + '\ninvite: ' + _commando.invite.description
-        + '\n----------------------------------------------------'
-        + '\npout: ' + _commando.pout.description
-        + '\n----------------------------------------------------'
-        + '\nselfie: ' + _commando.selfie.description
-        + '\n----------------------------------------------------'
-        + '\nsleep: ' + _commando.sleep.description
-        + '\n----------------------------------------------------'
-        + '\nsmug: ' + _commando.smug.description
-        + '\n----------------------------------------------------'
-        + '\ncomfort: ' + _commando.comfort.description
-        + '\n----------------------------------------------------'
-        + '\nset_game: ' + _commando._setgame.description
-        + '\n----------------------------------------------------'
-        + '\navatar: ' + _commando.avatar.description
-        + '\n----------------------------------------------------'
-        + '\nhourly: ' + _commando.hourly.description
-        + '\n=================================\n```';
+	let response = '```css';
+	response += '\n========= Help Commands =========';
+	response += '\nPrefix any command with "-"\n';
+	Object.keys(_commando).map((key) => {
+		response += `\n<${key}>: ${_commando[key].description}\n`;
+	});
+	response += '\n=================================\n```';
 
-    return response;
+	return response;
 };
 
 let _generateGreetingMessage = function(messageType) {
@@ -329,7 +332,7 @@ let _isNotPickCommandFormat = function() {
 };
 
 let _parseOptions = function(message) {
-    let options = message.slice(5).split('|');
+    let options = message.replace('haruna, pick', '').split('|');
     for(let i = 0; i < options.length; i++) {
         options[i] = options[i].trim();
     }

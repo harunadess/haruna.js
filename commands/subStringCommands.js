@@ -1,9 +1,10 @@
 'use strict';
 const Logger = require('../util/logger').Logger;
-let _author, _content;
 
 const SubStringCommands = function() {
-	this._author, this._content, this._AdmiralId, this._MarkId;
+	this._author, this._content;
+	this._AdmiralId = require('../../auth/auth').admiralID;
+	this._MarkId = require('../../auth/auth').markID;
 	
     SubStringCommands.prototype.processMessageIfCommandExists = function(message) {
         this._initialiseVariables(message);
@@ -33,8 +34,6 @@ const SubStringCommands = function() {
 	SubStringCommands.prototype._initialiseVariables = function(message) {
 		this._content = message.content.toLowerCase();
 		this._author = message.author;
-		this._AdmiralId = require('../../auth/auth').admiralID
-		this._MarkId = require('../../auth/auth').markID;
 	};
 	
 	SubStringCommands.prototype._notFromBot = function() {

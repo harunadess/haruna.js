@@ -21,13 +21,14 @@ try {
     console.log('couldn\'t create objectConstructor', error);
 }
 let _conversationEngineActive = false;
-//string arrays of files
-module.exports.pouts = require('./paths/pouts').paths;
-module.exports.smugs = require('./paths/smugs.json').paths;
-module.exports.selfies = require('./paths/selfies.json').paths;
-module.exports.idleTexts = require('./paths/idles.json').paths;
-module.exports.comfortTexts = require('./paths/comforts.json').paths;
-let _hourlyTexts = require('./paths/hourly.json').texts;
+//get stored responses from json
+module.exports.pouts = require('./json/paths/pouts').paths;
+module.exports.smugs = require('./json/paths/smugs.json').paths;
+module.exports.selfies = require('./json/paths/selfies.json').paths;
+module.exports.idleTexts = require('./json/paths/idles.json').paths;
+module.exports.comfortTexts = require('./json/paths/comforts.json').paths;
+module.exports.magic8BallResponses = require('./json/magic8BallResponses.json').responses;
+let _hourlyTexts = require('./json/hourly.json').texts;
 
 
 module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
@@ -148,7 +149,7 @@ let _setActivityWithResponse = function(type, game) {
 			return _setActivity(type, playing);
 		}).catch(error => {
 			Logger.log(Logger.tag.error, 'Error reading from storage: ' + error);
-			playing = 'Jortathlon\'s Secretary Ship <3';
+			playing = 'Secretary Ship <3';
 			type = 'PLAYING';
 			return _setActivity(type, playing);
 		});
@@ -173,11 +174,11 @@ let _setActivity = function(type, playing) {
 
 let _getActivityType = function(type) {
 	if(type.toLowerCase() === 'watching') {
-		return 'WATCHING';
+		return type.toUpperCase();
 	} else if(type.toLowerCase() === 'listening') {
-		return 'LISTENING';
+		return type.toUpperCase();
 	} else if(type.toLowerCase() === 'streaming') {
-		return 'STREAMING';
+		return type.toUpperCase();
 	}
 	return 'PLAYING';
 }
@@ -229,21 +230,35 @@ let _removeItemFromPosInArray = function(array, item) {
 _haruna.on('message', function(message) {
     let response = '';
 
-    if(_isGenericCommand(message.content)) {
-        response = Commands.processMessageIfCommandExists(message);
-    } else if(_isMusicCommand(message.content)) {
-        response = MusicCommands.processMessageIfCommandExists(message);
-    } else {
-        response = _substringCommands.processMessageIfCommandExists(message);
-        if(_conversationEngineActive && response === '') {
-            response = _conversationEngine.respond(message);
-        }
-    }
+	//todo: probably going to have to modify how this works - probably unify some sort of commands thing.
+    // if(_isGenericCommand(message.content)) {
+    //     response = Commands.processMessageIfCommandExists(message);
+    // } else if(_isMusicCommand(message.content)) {
+    //     response = MusicCommands.processMessageIfCommandExists(message);
+    // } else {
+    //     response = _substringCommands.processMessageIfCommandExists(message);
+    //     if(_conversationEngineActive && response === '') {
+    //         response = _conversationEngine.respond(message);
+    //     }
+	// }
+	if(_isMusicCommand(message.content)) {
+		response = MusicCommands.processMessageIfCommandExists(message);
+	} else {
+		if(_isGenericCommand(message.content)) {
+			response = Commands.processMessageIfCommandExists(message);
+		}
+		if(response === '') {
+			response = _substringCommands.processMessageIfCommandExists(message);
+			if(_conversationEngineActive && response === '') {
+				response = _conversationEngine.respond(message);
+			}
+		}
+	}
 
     if(_hasResponseToGive(response)) {
 		Promise.resolve(response).then(result => {
 			if(_thereWasNoFuckUp(result)) {
-				_respondViaChannel(result, message.channel);            
+				_respondViaChannel(result, message);            
 			} else {
 				Logger.log(Logger.tag.info, `Haruna encountered something strange: ${JSON.stringify(result)}`);
 			}
@@ -254,7 +269,7 @@ _haruna.on('message', function(message) {
 });
 
 let _isGenericCommand = function(content) {
-    return content.indexOf('-') === 0; //The '-' character is the command character e.g. '-hello'
+	return (content.indexOf('h') === 0) && (content.includes('haruna,'));
 };
 
 let _isMusicCommand = function(content) {
@@ -265,15 +280,21 @@ let _hasResponseToGive = function(response) {
     return (response !== '') && (response !== undefined);
 };
 
-let _thereWasNoFuckUp = function(hopefullyThisIsAString) {
-    return (typeof hopefullyThisIsAString) === 'string';
+let _thereWasNoFuckUp = function(aLovelyType) {
+	return (typeof aLovelyType) === 'string'
+		|| (typeof aLovelyType) === 'url' 
+		|| ((typeof aLovelyType) === 'object' && aLovelyType[0] !== undefined);
 };
 
-let _respondViaChannel = function(response, channel) {
+let _respondViaChannel = function(response, message) {
     if(_isImage(response)) {
-        Messaging.sendImageToChannel(response, channel);
+		if(!_fromWeb(response)) {
+			Messaging.sendImageToChannel(response, message.channel);
+		} else {
+			Messaging.sendEmbedToChannel(response, message);
+		}
     } else {
-        Messaging.sendTextMessageToChannel(response, channel);
+        Messaging.sendTextMessageToChannel(response, message.channel);
     }
 };
 
@@ -284,8 +305,21 @@ let _sendTextMessageToPortGeneral = function(text) {
 };
 
 let _isImage = function(response) {
-    return response.endsWith(".png") || response.endsWith(".jpg")
+	if(typeof response === 'string') {
+		return response.endsWith(".png") || response.endsWith(".jpg")
         || response.endsWith(".gif") || response.endsWith(".jpeg");
+	} else {
+		return response[0].endsWith(".png") || response[0].endsWith(".jpg")
+        || response[0].endsWith(".gif") || response[0].endsWith(".jpeg");
+	}
+};
+
+let _fromWeb = function(response) {
+	if(typeof response === 'string') {
+		return response.toLowerCase().includes('http');
+	} else {
+		return response[0].toLowerCase().includes('http');
+	}
 };
 
 let _sendGreetingMessage = function() {
@@ -332,7 +366,7 @@ _haruna.on('reconnecting', function() {
 //Error
 //***********************
 _haruna.on('error', function(error) {
-    Logger.log(Logger.tag.error, `Haruna encountered a connection problem: ${JSON.stringify(error, null, 2)}`);
+    Logger.log(Logger.tag.error, `Haruna encountered a connection problem: ${error.message}`);
 });
 
 

@@ -12,7 +12,8 @@ node_modules
 .idea/
 
 # configs
-/json
+/json/storage/
+/json/conversationOptions.json
 
 # images
 *.png
