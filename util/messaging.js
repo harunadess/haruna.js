@@ -7,9 +7,9 @@ const Embed_Template = {
 	//acutal post link
 	title: "",
 	url: "",
-	color: 16312092,
+	color: 16750848,
 	"footer": {
-	  "icon_url": "",
+	  "icon_url": "https://cdn.discordapp.com/avatars/285402443041210368/0d1ec0dad4879ec386e6bd621cc11f3e.png?size=2048",
 	  "text": "daijobu desu!"
 	},
 	//image from danbooru, since we can get full size

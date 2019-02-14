@@ -100,10 +100,14 @@ module.exports.toggleIntervals = function(type, userToMessage) {
 };
 
 module.exports.findUser = function(nickname) {
-	let matchingUsers = _haruna.guilds.map(guild => {
-		return guild.members.find(user => {return user.nickname === nickname;});
+	let user = undefined;
+	_haruna.guilds.map(guild => {
+		guild.members.find(guildMember => {
+			if (guildMember.user.username === nickname.trim() || (guildMember.nickname === nickname))
+				user = guildMember;
+		});
 	});
-	return matchingUsers.find(user => {return (user !== null);});
+	return user;	
 };
 
 //***********************
@@ -326,7 +330,7 @@ let _sendGreetingMessage = function() {
 	let portGeneralID = require('../auth/auth').port.general.id;
 	let portGeneralChannel = _haruna.channels.get(portGeneralID);
 	let greetingMessage = require('./json/conversationOptions.json').greeting;
-	_respondViaChannel(greetingMessage, portGeneralChannel);
+	_respondViaChannel(greetingMessage, {channel: portGeneralChannel});
 };
 
 

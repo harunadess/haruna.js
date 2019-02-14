@@ -263,8 +263,10 @@ let _commando = {
             } else {
 				console.log(targetUser);
 				targetUser = _haruna.findUser(targetUser);
-				console.log(JSON.stringify(targetUser, null, 1));
-                return _author + ', ' + targetUser.user.avatarURL;
+				if(targetUser !== undefined)
+					return _author + ', ' + targetUser.user.avatarURL;
+				else
+					return 'Haruna was unable to find the avatar, desu!';
             }
         },
         description: `replies with author's avatar`
