@@ -10,7 +10,8 @@ module.exports.Logger = {
         success: 'SUCC',
         message: {
             text: 'MSG',
-            image: 'MSG_IMG'
+			image: 'MSG_IMG',
+			embed: 'MSG_EMB'
         },
         command: 'CMD'
     },

@@ -10,7 +10,7 @@ const Embed_Template = {
 	color: 16750848,
 	"footer": {
 	  "icon_url": "https://cdn.discordapp.com/avatars/285402443041210368/0d1ec0dad4879ec386e6bd621cc11f3e.png?size=2048",
-	  "text": "daijobu desu!"
+	  "text": "daijobu desu! | powered by *booru"
 	},
 	//image from danbooru, since we can get full size
 	"image": {
@@ -53,10 +53,14 @@ module.exports.Messaging = {
 		embed.url = url[1];
 		embed.image.url = url[0];
 
-		rawMessage.channel.send('Haruna found something, desu! <3', {embed: embed}).then(message => {
-			Logger.log(Logger.tag.message.image, `Sent message: ${JSON.stringify(message)}`);
-        }).catch(error => {
-            Logger.log(Logger.tag.error, `Something went wrong sending an embed: ${JSON.stringify(error, null, 2)}`);
-        });
+		rawMessage.channel.startTyping();
+		setTimeout(function() {
+			rawMessage.channel.stopTyping();
+			rawMessage.channel.send('Haruna found something, desu! <3', {embed: embed}).then(message => {
+				Logger.log(Logger.tag.message.embed, `Sent message: ${message.cleanContent}, ${message.embeds}`);
+			}).catch(error => {
+				Logger.log(Logger.tag.error, `Something went wrong sending an embed: ${error.message}`);
+			});
+		}, Typing_Time);
 	}
 };
