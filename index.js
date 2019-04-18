@@ -15,6 +15,7 @@ let _haruna = new Discord.Client({autoReconnect: true});
 let _substringCommands = new SubStringCommands();
 let _conversationEngine = new ConversationEngine.ConversationEngine();
 let _jsonLocalStorage = new LocalStorage();
+let elevenPMTimeout;
 try {
     let _objectConstructor = new ObjectConstructor();
 } catch(error) {
@@ -126,7 +127,7 @@ let _init = function() {
 	return _jsonLocalStorage.setStorage('localStorage.json').then(() => {
 		Logger.log(Logger.tag.info, `Successfully set local storage!`);
 		return _setActivityWithResponse().then(() => {
-            // return _setInterval();
+			// return _setInterval();
         });
 	}).catch(error => {
 		Logger.log(Logger.tag.error, `Error setting local storage: ${error}`);
@@ -185,7 +186,42 @@ let _getActivityType = function(type) {
 		return type.toUpperCase();
 	}
 	return 'PLAYING';
-}
+};
+
+let _setTimedMessages = function() {
+	const hour = 1.2e6;
+	elevenPMTimeout = _createInterval(_check11PM, hour);
+};
+
+let _createInterval = function(func, duration) {
+	return setTimeout(() => {
+		func();
+		return _createInterval(func, duration);
+	}, duration);
+};
+
+let _check11PM = function() {
+	const time = new Date();
+	const hour = time.getHours();
+	const minute = time.getMinutes();
+
+	let message = `Teitoku, it is ${hour}:00 hours.`;
+	if (hour === 23) {
+		message += ' Haruna thinks you should start heading to bed soon <3';
+	} else if (hour === 0) {
+		message += ' Haruna says you should be in bed now desu.';
+	} else if (hour === 1) {
+		message += ' Haruna is telling you to go to sleep now. No buts.';
+	}
+
+	if (_minuteInRange(minute)) {
+		_sendTextMessageToPortGeneral(message);
+	}
+};
+
+let _minuteInRange = function(minute) {
+	return minute <= 20;
+};
 
 let _findUserInStoredIntervals = function(type, userToMessage) {
     //todo: what it says
@@ -378,6 +414,7 @@ _haruna.on('error', function(error) {
 _haruna.login(require('../auth/auth').harunaLogin).then(() => {
 	Logger.log(Logger.tag.info, 'Login success! \<3');
 	_sendGreetingMessage();
+	_setTimedMessages();
 }).catch(error => {
     Logger.log(Logger.tag.error, `Login failed: ${error} :c`);
     console.log(error);
