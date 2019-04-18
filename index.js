@@ -206,7 +206,7 @@ let _checkTime = function() {
 	const minute = time.getMinutes();
 	let duration = 1.2e6;
 
-	let message = `Teitoku, it is ${hour}:${minute} hours.`;
+	let message = `Teitoku, it is ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute} hours.`;
 	if (hour === 23) {
 		duration = 0.6e6;
 		message += ' Haruna thinks you should start heading to bed soon <3';
