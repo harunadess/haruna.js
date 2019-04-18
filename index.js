@@ -189,14 +189,14 @@ let _getActivityType = function(type) {
 };
 
 let _setTimedMessages = function() {
-	const twentyMinutes = 1.2e6;
-	elevenPMTimeout = _createInterval(_checkTime, twentyMinutes);
+	const initDuration = 5000;
+	elevenPMTimeout = _createInterval(_checkTime, initDuration);
 };
 
 let _createInterval = function(func, duration) {
 	return setTimeout(() => {
-		func();
-		return _createInterval(func, duration);
+		let newDuration = func();
+		return _createInterval(func, newDuration);
 	}, duration);
 };
 
@@ -204,20 +204,26 @@ let _checkTime = function() {
 	const time = new Date();
 	const hour = time.getHours();
 	const minute = time.getMinutes();
+	let duration = 1.2e6;
 
-	if(!_minuteInRange(minute))
-		return;
-
-	let message = `Teitoku, it is ${hour}:00 hours.`;
+	let message = `Teitoku, it is ${hour}:${minute} hours.`;
 	if (hour === 23) {
+		duration = 0.6e6;
 		message += ' Haruna thinks you should start heading to bed soon <3';
 	} else if (hour === 0) {
+		duration = 0.3e6;
 		message += ' Haruna says you should be in bed now desu.';
 	} else if (hour === 1) {
+		duration = 0.15e6;
 		message += ' Haruna is telling you to go to sleep now. No buts.';
 	}
 
-	_sendTextMessageToPortGeneral(message);
+	if(_minuteInRange(duration))
+		_sendTextMessageToPortGeneral(message);
+	else if (hour === 23 || hour === 0 || hour === 1)
+		_sendTextMessageToPortGeneral(message);
+	
+	return duration;
 };
 
 let _minuteInRange = function(minute) {
