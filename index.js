@@ -189,8 +189,8 @@ let _getActivityType = function(type) {
 };
 
 let _setTimedMessages = function() {
-	const hour = 1.2e6;
-	elevenPMTimeout = _createInterval(_check11PM, hour);
+	const twentyMinutes = 1.2e6;
+	elevenPMTimeout = _createInterval(_checkTime, twentyMinutes);
 };
 
 let _createInterval = function(func, duration) {
@@ -200,10 +200,13 @@ let _createInterval = function(func, duration) {
 	}, duration);
 };
 
-let _check11PM = function() {
+let _checkTime = function() {
 	const time = new Date();
 	const hour = time.getHours();
 	const minute = time.getMinutes();
+
+	if(!_minuteInRange(minute))
+		return;
 
 	let message = `Teitoku, it is ${hour}:00 hours.`;
 	if (hour === 23) {
@@ -214,9 +217,7 @@ let _check11PM = function() {
 		message += ' Haruna is telling you to go to sleep now. No buts.';
 	}
 
-	if (_minuteInRange(minute)) {
-		_sendTextMessageToPortGeneral(message);
-	}
+	_sendTextMessageToPortGeneral(message);
 };
 
 let _minuteInRange = function(minute) {
