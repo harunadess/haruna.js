@@ -16,6 +16,7 @@ let _substringCommands = new SubStringCommands();
 let _conversationEngine = new ConversationEngine.ConversationEngine();
 let _jsonLocalStorage = new LocalStorage();
 let elevenPMTimeout;
+const admiralID = require('../auth/auth').admiralID;
 try {
     let _objectConstructor = new ObjectConstructor();
 } catch(error) {
@@ -195,7 +196,7 @@ let _setTimedMessages = function() {
 
 let _createInterval = function(func, duration) {
 	return setTimeout(() => {
-		let newDuration = func();
+        let newDuration = func();
 		return _createInterval(func, newDuration);
 	}, duration);
 };
@@ -204,30 +205,31 @@ let _checkTime = function() {
 	const time = new Date();
 	const hour = time.getHours();
 	const minute = time.getMinutes();
-	let duration = 1.2e6;
+	let duration = 60000;
 
-	let message = `Teitoku, it is ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute} hours.`;
+	let message = `<@${admiralID}>, it is ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute} hours.`;
 	if (hour === 23) {
-		duration = 0.6e6;
 		message += ' Haruna thinks you should start heading to bed soon <3';
 	} else if (hour === 0) {
-		duration = 0.3e6;
 		message += ' Haruna says you should be in bed now desu.';
 	} else if (hour === 1) {
-		duration = 0.15e6;
 		message += ' Haruna is telling you to go to sleep now. No buts.';
 	}
 
-	if(_minuteInRange(duration))
+	if(_minuteInRange(minute))
 		_sendTextMessageToPortGeneral(message);
-	else if (hour === 23 || hour === 0 || hour === 1)
-		_sendTextMessageToPortGeneral(message);
+	else if (_hourInRange(hour))
+        _sendTextMessageToPortGeneral(message);
 	
 	return duration;
 };
 
 let _minuteInRange = function(minute) {
 	return minute <= 20;
+};
+
+let _hourInRange = function(hour) {
+    return hour > 22 || hour < 6;
 };
 
 let _findUserInStoredIntervals = function(type, userToMessage) {
