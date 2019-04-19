@@ -1,7 +1,11 @@
 'use strict';
-const _haruna = require('../index.js'); //for access to image stores and client methods
-const _booruSearch = require('../commands/booru');
+const _haruna = require('../index'); //for access to image stores and client methods
+const _booruSearch = require('./booru');
 const _booru = new _booruSearch();
+const _timedMessages = require('./timedMessages');
+const _hourlies = new _timedMessages();
+_hourlies.initialise();
+
 let _args, _author, _channel, _command, _content;
 
 module.exports.Commands = {
@@ -24,12 +28,10 @@ let _initialiseVariables = function(message) {
 	//_args = _content.slice(1).split(' ');
 	_args = _content.slice(7).split(' ');
 
-	//todo: fix args
 	_args = _args.filter((arg) => {
 		if(arg.length >= 1)
 			return arg;
 	});
-	console.log('args: ', _args);
     _command = _args.shift().toLowerCase();
 };
 
@@ -231,7 +233,15 @@ let _commando = {
 			return Promise.resolve(_booru.search(_content));
 		},
 		description: 'search *booru for image with specified tags'
-	},
+    },
+    
+    //set timed messsages
+    'hourlies': {
+        function() {
+            _hourlies.setForUser(_author);
+        },
+        description: 'sets hourly messages (DMs) for user; use command for more info'
+    },
 
     //set game command (bot owner)
     '_setgame': {

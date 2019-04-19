@@ -9,13 +9,11 @@ const MusicCommands = require('./commands/musicCommands').MusicCommands;
 const LocalStorage = require('./util/localStorage');
 const ObjectConstructor = require('./util/objectConstructor');
 const ConversationEngine = require('./commands/conversations');
-//todo: fix intervals.
 let _haruna = new Discord.Client({autoReconnect: true});
 //substring commands
 let _substringCommands = new SubStringCommands();
 let _conversationEngine = new ConversationEngine.ConversationEngine();
 let _jsonLocalStorage = new LocalStorage();
-let elevenPMTimeout;
 const admiralID = require('../auth/auth').admiralID;
 try {
     let _objectConstructor = new ObjectConstructor();
@@ -189,89 +187,6 @@ let _getActivityType = function(type) {
 	return 'PLAYING';
 };
 
-let _setTimedMessages = function() {
-	const initDuration = 5000;
-	elevenPMTimeout = _createInterval(_checkTime, initDuration);
-};
-
-let _createInterval = function(func, duration) {
-	return setTimeout(() => {
-        let newDuration = func();
-		return _createInterval(func, newDuration);
-	}, duration);
-};
-
-let _checkTime = function() {
-	const time = new Date();
-	const hour = time.getHours();
-	const minute = time.getMinutes();
-	let duration = 60000;
-
-	let message = `<@${admiralID}>, it is ${hour < 10 ? '0' + hour : hour}:${minute < 10 ? '0' + minute : minute} hours.`;
-	if (hour === 23) {
-		message += ' Haruna thinks you should start heading to bed soon <3';
-	} else if (hour === 0) {
-		message += ' Haruna says you should be in bed now desu.';
-	} else if (hour === 1) {
-		message += ' Haruna is telling you to go to sleep now. No buts.';
-	}
-
-	if(_minuteInRange(minute))
-		_sendTextMessageToPortGeneral(message);
-	else if (_hourInRange(hour))
-        _sendTextMessageToPortGeneral(message);
-	
-	return duration;
-};
-
-let _minuteInRange = function(minute) {
-	return minute <= 20;
-};
-
-let _hourInRange = function(hour) {
-    return hour > 22 || hour < 6;
-};
-
-let _findUserInStoredIntervals = function(type, userToMessage) {
-    //todo: what it says
-};
-
-let _setInterval = function(type, userToMessage) {
-    //todo: handle no type or user specified
-    if(!type || !userToMessage) {
-        return Promise.resolve('Have not implemented setting from storage yet');
-    }
-    let intervals;
-    return _jsonLocalStorage.getItemFromStorage('intervals').then(storedIntervals => {
-        intervals = storedIntervals;
-        console.log('intervals', intervals);
-
-        let user = _objectConstructor.createDiscordUser(userToMessage);
-        let interval = _objectConstructor.createInterval(user.id, user);
-        intervals[type].push(interval);
-        return _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'intervals', intervals).then(() => {
-            Logger.log(Logger.tag.info, `Haruna has saved the interval!`);
-            //todo: actually set the interval
-        }).catch(error => {
-            Logger.log(Logger.tag.error, `Haruna failed to save the interval :c ${error}`);
-        });
-    }).catch(error => {
-        Logger.error(`Can't set interval for ${userToMessage}`);
-        return `Sorry, Haruna ran into a problem setting your interval :c`;
-    });
-};
-
-let _clearInterval = function(type, userToMessage) {
-    //todo: find interval
-    //todo: clear interval
-    //todo: save interval
-    return Promise.resolve('Not implemented yet.');
-};
-
-let _removeItemFromPosInArray = function(array, item) {
-    return array.splice(array.indexOf(item), 1);
-};
-
 
 //***********************
 //Message received
@@ -279,17 +194,6 @@ let _removeItemFromPosInArray = function(array, item) {
 _haruna.on('message', function(message) {
     let response = '';
 
-	//todo: probably going to have to modify how this works - probably unify some sort of commands thing.
-    // if(_isGenericCommand(message.content)) {
-    //     response = Commands.processMessageIfCommandExists(message);
-    // } else if(_isMusicCommand(message.content)) {
-    //     response = MusicCommands.processMessageIfCommandExists(message);
-    // } else {
-    //     response = _substringCommands.processMessageIfCommandExists(message);
-    //     if(_conversationEngineActive && response === '') {
-    //         response = _conversationEngine.respond(message);
-    //     }
-	// }
 	if(_isMusicCommand(message.content)) {
 		response = MusicCommands.processMessageIfCommandExists(message);
 	} else {
@@ -415,7 +319,7 @@ _haruna.on('reconnecting', function() {
 //Error
 //***********************
 _haruna.on('error', function(error) {
-    Logger.log(Logger.tag.error, `Haruna encountered a connection problem: ${error.message}`);
+    Logger.log(Logger.tag.error, `Haruna encountered a connection problem: ${error}`);
 });
 
 
@@ -423,7 +327,6 @@ _haruna.on('error', function(error) {
 _haruna.login(require('../auth/auth').harunaLogin).then(() => {
 	Logger.log(Logger.tag.info, 'Login success! \<3');
 	_sendGreetingMessage();
-	_setTimedMessages();
 }).catch(error => {
     Logger.log(Logger.tag.error, `Login failed: ${error} :c`);
     console.log(error);
