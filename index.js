@@ -13,13 +13,16 @@ let _haruna = new Discord.Client({autoReconnect: true});
 //substring commands
 let _substringCommands = new SubStringCommands();
 let _conversationEngine = new ConversationEngine.ConversationEngine();
-let _jsonLocalStorage = new LocalStorage();
+let jsonLocalStorage = new LocalStorage();
+
 const admiralID = require('../auth/auth').admiralID;
+
 try {
     let _objectConstructor = new ObjectConstructor();
 } catch(error) {
     console.log('couldn\'t create objectConstructor', error);
 }
+
 let _conversationEngineActive = false;
 //get stored responses from json
 module.exports.pouts = require('./json/paths/pouts').paths;
@@ -28,6 +31,9 @@ module.exports.selfies = require('./json/paths/selfies.json').paths;
 module.exports.idleTexts = require('./json/paths/idles.json').paths;
 module.exports.comfortTexts = require('./json/paths/comforts.json').paths;
 module.exports.magic8BallResponses = require('./json/magic8BallResponses.json').responses;
+module.exports.jsonLocalStorage = jsonLocalStorage;
+
+// todo: add these to timedMessages
 let _hourlyTexts = require('./json/hourly.json').texts;
 
 
@@ -123,7 +129,7 @@ _haruna.on('ready', function() {
 });
 
 let _init = function() {
-	return _jsonLocalStorage.setStorage('localStorage.json').then(() => {
+	return jsonLocalStorage.setStorage('localStorage.json').then(() => {
 		Logger.log(Logger.tag.info, `Successfully set local storage!`);
 		return _setActivityWithResponse().then(() => {
 			// return _setInterval();
@@ -137,16 +143,16 @@ let _setActivityWithResponse = function(type, game) {
     let info, playing, response = '';
     if(game !== undefined) {
         playing = game;
-        return _jsonLocalStorage.getItemFromStorage('info').then(info => {
+        return jsonLocalStorage.getItemFromStorage('info').then(info => {
 			info.activity.name = playing;
 			info.activity.type = type;
-			return _jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'info', info).then(() => {
+			return jsonLocalStorage.writeJSONLocalStorage('localStorage.json', 'info', info).then(() => {
 				return _setActivity(type, playing);
 			});
 		});
     } else {
 		Logger.log(Logger.tag.info, 'No activity provided, reading from storage.');
-		return _jsonLocalStorage.getItemFromStorage('info').then(info => {
+		return jsonLocalStorage.getItemFromStorage('info').then(info => {
 			playing = info.activity.name;
 			type = info.activity.type;
 			Logger.log(Logger.tag.file, 'Successfully read activity from storage!');
@@ -197,7 +203,7 @@ _haruna.on('message', function(message) {
 	if(_isMusicCommand(message.content)) {
 		response = MusicCommands.processMessageIfCommandExists(message);
 	} else {
-		if(_isGenericCommand(message.content)) {
+		if(_isGenericCommand(message.content) && !message.author.bot) {
 			response = Commands.processMessageIfCommandExists(message);
 		}
 		if(response === '') {
@@ -222,7 +228,7 @@ _haruna.on('message', function(message) {
 });
 
 let _isGenericCommand = function(content) {
-	return (content.indexOf('h') === 0) && (content.includes('haruna,'));
+	return (content.toLowerCase().indexOf('h') === 0) && (content.toLowerCase().includes('haruna,'));
 };
 
 let _isMusicCommand = function(content) {
@@ -319,7 +325,7 @@ _haruna.on('reconnecting', function() {
 //Error
 //***********************
 _haruna.on('error', function(error) {
-    Logger.log(Logger.tag.error, `Haruna encountered a connection problem: ${error}`);
+    Logger.log(Logger.tag.error, `Haruna encountered a connection problem: ${error.message}`);
 });
 
 
@@ -328,6 +334,6 @@ _haruna.login(require('../auth/auth').harunaLogin).then(() => {
 	Logger.log(Logger.tag.info, 'Login success! \<3');
 	_sendGreetingMessage();
 }).catch(error => {
-    Logger.log(Logger.tag.error, `Login failed: ${error} :c`);
+    Logger.log(Logger.tag.error, `Login failed: ${error.message} :c`);
     console.log(error);
 });

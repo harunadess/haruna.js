@@ -42,14 +42,14 @@ const BooruSearch = function() {
 	};
 
 	BooruSearch.prototype._search = function(tags) {
-		return danbooru.posts({tags: tags}).then(posts => {
-			let index = Math.floor(Math.random() * posts.length);
+		return danbooru.posts({tags: tags, random: true}).then(posts => {
+			let index = Math.floor(Math.random()*posts.length);
 			let post = posts[index];
 
 			if(post !== undefined) {
 				let postSrc = ['', ''];
 				postSrc[0] = post.file_url;
-				if(post.source.includes('i.pximg.net')) {
+				if(_isPixivSource(post.source)) {
 					let pixivId = _findPixivID(post.source);
 					postSrc[1] = pixiv_base + pixivId;
 				} else {
@@ -68,5 +68,10 @@ const BooruSearch = function() {
 let _findPixivID = function(src) {
 	return src.substr(src.search(/[0-9]{8}/), 8);
 };
+
+let _isPixivSource = function(src) {
+	return src.includes('pximg.net')
+		|| src.includes('pixiv.net');
+}
 
 module.exports = BooruSearch;

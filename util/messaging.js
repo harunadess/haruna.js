@@ -1,8 +1,6 @@
 'use strict';
 const Logger = require('./logger').Logger;
 const Typing_Time = 800;
-//todo: create fun embed template that may or may not be nicer
-// than standard pixiv embeds
 const Embed_Template = {
 	//acutal post link
 	title: "",
@@ -23,7 +21,7 @@ module.exports.Messaging = {
 		channel.startTyping();
 		setTimeout(function() {
 			channel.stopTyping();
-			channel.send(messageContent).then(message => {
+			return channel.send(messageContent).then(message => {
 				Logger.log(Logger.tag.message.text, `Sent message: ${message.cleanContent}`);
 			}).catch(error => {
 				Logger.log(Logger.tag.error, `Something went wrong sending a message: ${error}`);
@@ -32,7 +30,7 @@ module.exports.Messaging = {
 	},
 	
 	sendTextMessageToChannelNoDelay: function(messageContent, channel) {
-		channel.send(messageContent).then(message => {
+		return channel.send(messageContent).then(message => {
 			Logger.log(Logger.tag.message.text, `Sent message: ${message.cleanContent}`);
 		}).catch(error => {
 			Logger.log(Logger.tag.error, `Something went wrong sending a message: ${error}`);
@@ -40,7 +38,7 @@ module.exports.Messaging = {
 	},
 
     sendImageToChannel: function(imagePath, channel) {
-        channel.send('', {file: imagePath}).then(message => {
+		return channel.send('', {file: imagePath}).then(message => {
             Logger.log(Logger.tag.message.image, `Sent message: ${message.attachments.first().filename}`);
         }).catch(error => {
             Logger.log(Logger.tag.error, `Something went wrong sending an image: ${error}`);
@@ -56,7 +54,7 @@ module.exports.Messaging = {
 		rawMessage.channel.startTyping();
 		setTimeout(function() {
 			rawMessage.channel.stopTyping();
-			rawMessage.channel.send('Haruna found something, desu! <3', {embed: embed}).then(message => {
+			return rawMessage.channel.send('Haruna found something, desu! <3', {embed: embed}).then(message => {
 				Logger.log(Logger.tag.message.embed, `Sent message: ${message.cleanContent}, ${message.embeds}`);
 			}).catch(error => {
 				Logger.log(Logger.tag.error, `Something went wrong sending an embed: ${error.message}`);

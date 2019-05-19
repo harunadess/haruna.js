@@ -5,6 +5,8 @@ const _booru = new _booruSearch();
 const _timedMessages = require('./timedMessages');
 const _hourlies = new _timedMessages();
 _hourlies.initialise();
+const _rems = require('./reminders');
+const _reminders = new _rems(_haruna.jsonLocalStorage);
 
 let _args, _author, _channel, _command, _content;
 
@@ -240,7 +242,7 @@ let _commando = {
         function() {
             _hourlies.setForUser(_author);
         },
-        description: 'sets hourly messages (DMs) for user; use command for more info'
+        description: 'sets hourly messages (DMs). 1 DM when it reaches a new hour. 1 DM every 20/15/10 minutes when the time past 11pm/12am/1am'
     },
 
     //set game command (bot owner)
@@ -295,6 +297,13 @@ let _commando = {
 			return 'This is not implemented, desu!';
         },
         description: 'sets/unsets chatting'
+    },
+
+    'remindme': {
+        'function': function() {
+            return Promise.resolve(_reminders.createUserReminder(_author, _content));
+        },
+        description: 'adds reminder for user. Usage: haruna, remindme <reminder_thing> <time> <days/hrs/mins>'
     }
 };
 
