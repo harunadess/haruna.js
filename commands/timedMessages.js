@@ -4,6 +4,7 @@ const Messaging = require('../util/messaging').Messaging;
 const Logger = require('../util/logger').Logger;
 const userJoinMessage = `Hi there, Haruna will send you hourly notifications until she goes offline, or you ask me to stop. To stop these messages, just say \`\`Haruna, hourlies\`\` <3`;
 const userLeaveMessage = `Haruna will no longer send you hourly notifications. Say \`\`Haruna, hourlies\`\` to re-enable.`;
+const _hourlyTexts = require('../json/hourly.json').texts;
 
 let lastHour, lastMinute, timeout;
 let usersToMessage = [];

@@ -7,21 +7,12 @@ const Logger = require('./util/logger').Logger;
 const Commands = require('./commands/commands').Commands;
 const MusicCommands = require('./commands/musicCommands').MusicCommands;
 const LocalStorage = require('./util/localStorage');
-const ObjectConstructor = require('./util/objectConstructor');
+// const ObjectConstructor = require('./util/objectConstructor');
 const ConversationEngine = require('./commands/conversations');
-let _haruna = new Discord.Client({autoReconnect: true});
+const haruna = new Discord.Client({autoReconnect: true});
 //substring commands
-let _substringCommands = new SubStringCommands();
 let _conversationEngine = new ConversationEngine.ConversationEngine();
 let jsonLocalStorage = new LocalStorage();
-
-const admiralID = require('../auth/auth').admiralID;
-
-try {
-    let _objectConstructor = new ObjectConstructor();
-} catch(error) {
-    console.log('couldn\'t create objectConstructor', error);
-}
 
 let _conversationEngineActive = false;
 //get stored responses from json
@@ -32,10 +23,10 @@ module.exports.idleTexts = require('./json/paths/idles.json').paths;
 module.exports.comfortTexts = require('./json/paths/comforts.json').paths;
 module.exports.magic8BallResponses = require('./json/magic8BallResponses.json').responses;
 module.exports.jsonLocalStorage = jsonLocalStorage;
+module.exports.haruna = haruna;
 
-// todo: add these to timedMessages
-let _hourlyTexts = require('./json/hourly.json').texts;
-
+// invoke events hooking and setup 
+require('./discordEvents');
 
 module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
     let response = '';
@@ -52,7 +43,7 @@ module.exports.deleteMessagesFromChannel = function(numberOfMessages, channel) {
 module.exports.shutdownGracefully = function(channel) {
     _sendShutdownMessage(channel);
     let response = '';
-    _haruna.destroy()
+    haruna.destroy()
         .catch(error => {
             response = 'Something went wrong shutting down desu! :c';
             Logger.log(Logger.tag.error, 'error shutting down: ' + error.message);
@@ -65,7 +56,7 @@ let _sendShutdownMessage = function(channel) {
 };
 
 module.exports.generateSelfInvite = function(channel) {
-    _haruna.generateInvite(238283776)
+    haruna.generateInvite(36826112)
         .then(link => {
             Logger.log(Logger.tag.info, `Invite link sent to ${channel} <3`);
             Messaging.sendTextMessageToChannel(`You can invite me from ${link} desu! <3`, channel);
@@ -79,68 +70,8 @@ module.exports.setGameWithResponse = function(type, game) {
     return _setActivityWithResponse(type, game);
 };
 
-module.exports.toggleIntervals = function(type, userToMessage) {
-    let response = '';
-    if(type === 'hourly') {
-        if(!_findUserInStoredIntervals(type, userToMessage)) {
-            return _setInterval(type, userToMessage).then(() => {
-                response = `Set hourly messages! Use \`\`-hourly\`\` again to disable! <3`;
-                return response;
-            }).catch(error => {
-                response = `Haruna failed to set hourly messages :c Contact teitoku for more info! <3`;
-                return response;
-            });
-        } else {
-            return _clearIntervals(type, userToMessage).then(() => {
-                response = `Cleared hourly messages! Use \`\`-hourly\`\` again to enable! <3`;
-                return response;
-            }).catch(error => {
-                response = `Haruna failed to clear hourly messages :c`;
-                return response;
-            });
-        }
-    } else {
-        //handle other types
-        return Promise.resolve('Only hourly intervals are implemented yet desu!');
-    }
-};
-
-module.exports.findUser = function(nickname) {
-	let user = undefined;
-	_haruna.guilds.map(guild => {
-		guild.members.find(guildMember => {
-			if (guildMember.user.username === nickname.trim() || (guildMember.nickname === nickname))
-				user = guildMember;
-		});
-	});
-	return user;	
-};
-
-//***********************
-//Bot start up
-//***********************
-_haruna.on('ready', function() {
-    let message = `Haruna is standing by in ${_haruna.guilds.size} guilds!\n[`;
-	_haruna.guilds.map(guild => {message += `{${guild.name}},`;});
-	message = message.substring(0, (message.length-1));
-    message += `]`;
-    Logger.log(Logger.tag.info, message);
-    Promise.resolve(_init());
-});
-
-let _init = function() {
-	return jsonLocalStorage.setStorage('localStorage.json').then(() => {
-		Logger.log(Logger.tag.info, `Successfully set local storage!`);
-		return _setActivityWithResponse().then(() => {
-			// return _setInterval();
-        });
-	}).catch(error => {
-		Logger.log(Logger.tag.error, `Error setting local storage: ${error}`);
-	});
-};
-
 let _setActivityWithResponse = function(type, game) {
-    let info, playing, response = '';
+    let playing;
     if(game !== undefined) {
         playing = game;
         return jsonLocalStorage.getItemFromStorage('info').then(info => {
@@ -175,7 +106,7 @@ let _setActivity = function(type, playing) {
 		}
 	};
 	
-	return _haruna.user.setActivity(activity.name, activity.options).then(user => {
+	return haruna.user.setActivity(activity.name, activity.options).then(user => {
 		Logger.log(Logger.tag.info, `Set game to ${user.presence.game.name}`);
 	}).catch(error => {
 		Logger.log(Logger.tag.error, 'Something went wrong setting the activity: ' + error + ' :c');
@@ -193,147 +124,13 @@ let _getActivityType = function(type) {
 	return 'PLAYING';
 };
 
-
-//***********************
-//Message received
-//***********************
-_haruna.on('message', function(message) {
-    let response = '';
-
-	if(_isMusicCommand(message.content)) {
-		response = MusicCommands.processMessageIfCommandExists(message);
-	} else {
-		if(_isGenericCommand(message.content) && !message.author.bot) {
-			response = Commands.processMessageIfCommandExists(message);
-		}
-		if(response === '') {
-			response = _substringCommands.processMessageIfCommandExists(message);
-			if(_conversationEngineActive && response === '') {
-				response = _conversationEngine.respond(message);
-			}
-		}
-	}
-
-    if(_hasResponseToGive(response)) {
-		Promise.resolve(response).then(result => {
-			if(_thereWasNoFuckUp(result)) {
-				_respondViaChannel(result, message);            
-			} else {
-				Logger.log(Logger.tag.info, `Haruna encountered something strange: ${JSON.stringify(result)}`);
-			}
-		}).catch(error => {
-			Logger.log(Logger.tag.error, `Haruna encountered an error: ${error}`);
+module.exports.findUser = function(nickname) {
+	let user = undefined;
+	haruna.guilds.map(guild => {
+		guild.members.find(guildMember => {
+			if (guildMember.user.username === nickname.trim() || (guildMember.nickname === nickname))
+				user = guildMember;
 		});
-    }
-});
-
-let _isGenericCommand = function(content) {
-	return (content.toLowerCase().indexOf('h') === 0) && (content.toLowerCase().includes('haruna,'));
+	});
+	return user;	
 };
-
-let _isMusicCommand = function(content) {
-    return content.indexOf('+') === 0; //Different command character for music
-};
-
-let _hasResponseToGive = function(response) {
-    return (response !== '') && (response !== undefined);
-};
-
-let _thereWasNoFuckUp = function(aLovelyType) {
-	return (typeof aLovelyType) === 'string'
-		|| (typeof aLovelyType) === 'url' 
-		|| ((typeof aLovelyType) === 'object' && aLovelyType[0] !== undefined);
-};
-
-let _respondViaChannel = function(response, message) {
-    if(_isImage(response)) {
-		if(!_fromWeb(response)) {
-			Messaging.sendImageToChannel(response, message.channel);
-		} else {
-			Messaging.sendEmbedToChannel(response, message);
-		}
-    } else {
-        Messaging.sendTextMessageToChannel(response, message.channel);
-    }
-};
-
-let _sendTextMessageToPortGeneral = function(text) {
-    let portGeneralID = require('../auth/auth').port.general.id;
-    let portGeneralChannel = _haruna.channels.get(portGeneralID);
-    Messaging.sendTextMessageToChannel(text, portGeneralChannel);
-};
-
-let _isImage = function(response) {
-	if(typeof response === 'string') {
-		return response.endsWith(".png") || response.endsWith(".jpg")
-        || response.endsWith(".gif") || response.endsWith(".jpeg");
-	} else {
-		return response[0].endsWith(".png") || response[0].endsWith(".jpg")
-        || response[0].endsWith(".gif") || response[0].endsWith(".jpeg");
-	}
-};
-
-let _fromWeb = function(response) {
-	if(typeof response === 'string') {
-		return response.toLowerCase().includes('http');
-	} else {
-		return response[0].toLowerCase().includes('http');
-	}
-};
-
-let _sendGreetingMessage = function() {
-	let portGeneralID = require('../auth/auth').port.general.id;
-	let portGeneralChannel = _haruna.channels.get(portGeneralID);
-	let greetingMessage = require('./json/conversationOptions.json').greeting;
-	_respondViaChannel(greetingMessage, {channel: portGeneralChannel});
-};
-
-
-//***********************
-//Guild join
-//***********************
-_haruna.on('guildCreate', function(guild) {
-    Logger.log(Logger.tag.info, `Haruna has joined ${guild.name}! Now standing by in ${_haruna.guilds.size} guilds! <3`);
-});
-
-
-//***********************
-//Guild leave
-//***********************
-_haruna.on('guildDelete', function(guild) {
-    Logger.log(Logger.tag.info, `Haruna has left ${guild.name}! Now standing by in ${_haruna.guilds.size} guilds! <3`);
-});
-
-
-//***********************
-//Disconnect
-//***********************
-_haruna.on('disconnect', function(reason) {
-    Logger.log(Logger.tag.info, `Haruna has disconnected <3`);
-});
-
-
-//***********************
-//Reconnect
-//***********************
-_haruna.on('reconnecting', function() {
-    Logger.log(Logger.tag.info, 'Haruna is reconnecting! <3');
-});
-
-
-//***********************
-//Error
-//***********************
-_haruna.on('error', function(error) {
-    Logger.log(Logger.tag.error, `Haruna encountered a connection problem: ${error.message}`);
-});
-
-
-//load token from auth.json
-_haruna.login(require('../auth/auth').harunaLogin).then(() => {
-	Logger.log(Logger.tag.info, 'Login success! \<3');
-	_sendGreetingMessage();
-}).catch(error => {
-    Logger.log(Logger.tag.error, `Login failed: ${error.message} :c`);
-    console.log(error);
-});

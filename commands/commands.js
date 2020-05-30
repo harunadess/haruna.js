@@ -282,15 +282,8 @@ let _commando = {
             }
         },
         description: `replies with author's avatar`
-    },
-
-    'hourly': {
-        function() {
-            return Promise.resolve(_haruna.toggleIntervals('hourly', _author));
-        },
-        description: 'sets/unsets hourly notifications'
-    },
-
+	},
+	
     'chat': {
         'function': function() {
 			//return _haruna.setConversationEngineActive();
