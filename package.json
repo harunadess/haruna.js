@@ -12,7 +12,7 @@
     "danbooru": "^3.0.8",
     "discord.js": "^11.3.2",
     "ffmpeg": "0.0.4",
-    "moment": "^2.21.0",
+    "moment": "^2.29.2",
     "node-opus": "^0.2.7",
     "ytdl-core": "^0.20.2"
   }
